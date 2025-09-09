@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# NRT Rules XML files (stored in separate repository)
+data/xml-files/*.xml
+data/xml-files/*.xlsx

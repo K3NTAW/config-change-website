@@ -1,0 +1,17 @@
+[
+  {
+    "name": "development",
+    "description": "Development Environment",
+    "is_active": true
+  },
+  {
+    "name": "staging",
+    "description": "Staging Environment",
+    "is_active": true
+  },
+  {
+    "name": "production",
+    "description": "Production Environment",
+    "is_active": false
+  }
+]

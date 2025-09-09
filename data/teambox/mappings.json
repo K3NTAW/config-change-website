@@ -1,0 +1,20 @@
+[
+  {
+    "code": "T001",
+    "teambox_name": "Team Alpha",
+    "environment": "development",
+    "release": "R2.1"
+  },
+  {
+    "code": "T002",
+    "teambox_name": "Team Beta",
+    "environment": "development",
+    "release": "R2.1"
+  },
+  {
+    "code": "T003",
+    "teambox_name": "Team Gamma",
+    "environment": "staging",
+    "release": "R2.1"
+  }
+]

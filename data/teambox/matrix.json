@@ -1,0 +1,30 @@
+[
+  {
+    "row_code": "R001",
+    "column_code": "C001",
+    "value": "1",
+    "environment": "development",
+    "release": "R2.1"
+  },
+  {
+    "row_code": "R001",
+    "column_code": "C002",
+    "value": "0",
+    "environment": "development",
+    "release": "R2.1"
+  },
+  {
+    "row_code": "R002",
+    "column_code": "C001",
+    "value": "0",
+    "environment": "development",
+    "release": "R2.1"
+  },
+  {
+    "row_code": "R002",
+    "column_code": "C002",
+    "value": "1",
+    "environment": "development",
+    "release": "R2.1"
+  }
+]

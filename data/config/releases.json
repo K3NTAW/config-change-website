@@ -1,0 +1,32 @@
+[
+  {
+    "name": "R1.0",
+    "version": "R1.0",
+    "description": "Release R1.0",
+    "is_active": false
+  },
+  {
+    "name": "R1.1",
+    "version": "R1.1",
+    "description": "Release R1.1",
+    "is_active": false
+  },
+  {
+    "name": "R1.2",
+    "version": "R1.2",
+    "description": "Release R1.2",
+    "is_active": false
+  },
+  {
+    "name": "R2.0",
+    "version": "R2.0",
+    "description": "Release R2.0",
+    "is_active": false
+  },
+  {
+    "name": "R2.1",
+    "version": "R2.1",
+    "description": "Release R2.1",
+    "is_active": true
+  }
+]

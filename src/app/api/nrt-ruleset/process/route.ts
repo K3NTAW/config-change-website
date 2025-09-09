@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fileStorage } from '@/lib/file-storage'
 import { DATA_PATHS } from '@/constants'
-import { exec } from 'child_process'
-import { promisify } from 'util'
+import { Octokit } from '@octokit/rest'
 import path from 'path'
 import fs from 'fs/promises'
 
-const execAsync = promisify(exec)
+// Initialize GitHub API client
+const octokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,34 +49,102 @@ export async function POST(request: NextRequest) {
       storyNumber: storyNumber || 'N/A'
     })
 
-    // Push to GIT (XML files repository)
+    // Push to GitHub XML repository using API
     let gitCommit = null
     let gitPush = null
     try {
-      const xmlRepoPath = process.env.XML_FILES_REPO_PATH || '/Users/k3ntaw/code/swisscom/nrt-rules-xml-files'
+      const repoOwner = process.env.XML_REPO_OWNER || 'K3NTAW'
+      const repoName = process.env.XML_REPO_NAME || 'xml-test-repo'
       
-      // Copy files to XML repository
-      await fs.copyFile(filePath, path.join(xmlRepoPath, fileName))
-      await fs.copyFile(xmlPath, path.join(xmlRepoPath, xmlFileName))
+      // Read file contents
+      const excelContent = await fs.readFile(filePath)
+      const xmlContent = await fs.readFile(xmlPath)
       
-      // Add and commit the file in XML repository
-      const { stdout: commitOutput } = await execAsync(`cd ${xmlRepoPath} && git add ${fileName} ${xmlFileName} && git commit -m "NRT-${storyNumber || 'AUTO'}: Generated NRT Ruleset XML for ${release}/${environment}"`)
-      gitCommit = commitOutput.trim()
+      // Create commit message
+      const commitMessage = `NRT-${storyNumber || 'AUTO'}: Generated NRT Ruleset XML for ${release}/${environment}`
       
-      // Push to remote repository
-      const { stdout: pushOutput } = await execAsync(`cd ${xmlRepoPath} && git push`)
-      gitPush = pushOutput.trim()
+      // Get current commit SHA
+      const { data: refData } = await octokit.rest.git.getRef({
+        owner: repoOwner,
+        repo: repoName,
+        ref: 'heads/main'
+      })
+      
+      // Get current tree
+      const { data: commitData } = await octokit.rest.git.getCommit({
+        owner: repoOwner,
+        repo: repoName,
+        commit_sha: refData.object.sha
+      })
+      
+      // Create blobs for the files
+      const excelBlob = await octokit.rest.git.createBlob({
+        owner: repoOwner,
+        repo: repoName,
+        content: excelContent.toString('base64'),
+        encoding: 'base64'
+      })
+      
+      const xmlBlob = await octokit.rest.git.createBlob({
+        owner: repoOwner,
+        repo: repoName,
+        content: xmlContent.toString('base64'),
+        encoding: 'base64'
+      })
+      
+      // Create new tree with the files
+      const { data: treeData } = await octokit.rest.git.createTree({
+        owner: repoOwner,
+        repo: repoName,
+        base_tree: commitData.tree.sha,
+        tree: [
+          {
+            path: fileName,
+            mode: '100644',
+            type: 'blob',
+            sha: excelBlob.data.sha
+          },
+          {
+            path: xmlFileName,
+            mode: '100644',
+            type: 'blob',
+            sha: xmlBlob.data.sha
+          }
+        ]
+      })
+      
+      // Create new commit
+      const { data: newCommit } = await octokit.rest.git.createCommit({
+        owner: repoOwner,
+        repo: repoName,
+        message: commitMessage,
+        tree: treeData.sha,
+        parents: [refData.object.sha]
+      })
+      
+      // Update branch reference
+      await octokit.rest.git.updateRef({
+        owner: repoOwner,
+        repo: repoName,
+        ref: 'heads/main',
+        sha: newCommit.sha
+      })
+      
+      gitCommit = `Commit: ${newCommit.sha}`
+      gitPush = 'Pushed to remote repository successfully'
+      
     } catch (error) {
-      console.warn('GIT operation failed:', error)
+      console.warn('GitHub API operation failed:', error)
       // Continue without failing the entire operation
     }
 
     return NextResponse.json({
       success: true,
-      message: 'NRT Ruleset XML generated and pushed to GIT successfully',
+      message: 'NRT Ruleset XML generated and pushed to XML repository successfully',
       xmlFile: xmlFileName,
+      excelFile: fileName,
       gitCommit,
-      gitPush: gitPush ? 'Pushed to remote repository' : 'Push failed - check logs'
+      gitPush: gitPush || 'Push failed - check logs'
     })
 
   } catch (error) {

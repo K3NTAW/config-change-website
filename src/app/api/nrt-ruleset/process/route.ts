@@ -53,8 +53,15 @@ export async function POST(request: NextRequest) {
     let gitCommit = null
     let gitPush = null
     try {
-      const repoOwner = process.env.XML_REPO_OWNER || 'K3NTAW'
-      const repoName = process.env.XML_REPO_NAME || 'xml-test-repo'
+      const repoUrl = process.env.XML_REPO_URL || 'https://github.com/K3NTAW/xml-test-repo.git'
+      
+      // Parse repository URL to extract owner and name
+      const urlMatch = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?$/)
+      if (!urlMatch) {
+        throw new Error('Invalid repository URL format')
+      }
+      const repoOwner = urlMatch[1]
+      const repoName = urlMatch[2]
       
       // Read file contents
       const excelContent = await fs.readFile(filePath)

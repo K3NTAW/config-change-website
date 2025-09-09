@@ -14,8 +14,7 @@ Add these environment variables in your Vercel dashboard:
 ### Required for XML Files Repository
 ```
 GITHUB_TOKEN=your_github_personal_access_token_here
-XML_REPO_OWNER=K3NTAW
-XML_REPO_NAME=xml-test-repo
+XML_REPO_URL=https://github.com/K3NTAW/xml-test-repo.git
 ```
 
 ### Other Required Variables
@@ -37,9 +36,11 @@ NEXTAUTH_SECRET=your_nextauth_secret_here
 
 ## XML Files Repository Setup
 
-1. Create a new repository named `xml-test-repo`
+1. Create a new repository (any name you prefer)
 2. Initialize with a README.md
-3. The application will automatically push XML files to this repository
+3. Copy the repository URL (e.g., `https://github.com/K3NTAW/your-repo-name.git`)
+4. Set the `XML_REPO_URL` environment variable to this URL
+5. The application will automatically push XML files to this repository
 
 ## How It Works
 

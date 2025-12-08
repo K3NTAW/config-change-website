@@ -8,7 +8,6 @@ export async function initializeData() {
     // Create default environments
     const environments: Environment[] = [
       { name: ENVIRONMENTS.DEVELOPMENT, description: 'Development Environment', is_active: true },
-      { name: ENVIRONMENTS.STAGING, description: 'Staging Environment', is_active: true },
       { name: ENVIRONMENTS.PRODUCTION, description: 'Production Environment', is_active: false }
     ]
     await fileStorage.writeJson(`${DATA_PATHS.CONFIG}/environments.json`, environments)
@@ -26,7 +25,7 @@ export async function initializeData() {
     const sampleTeamboxMappings: TeamboxMapping[] = [
       { code: 'T001', teambox_name: 'Team Alpha', environment: ENVIRONMENTS.DEVELOPMENT, release: 'R2.1' },
       { code: 'T002', teambox_name: 'Team Beta', environment: ENVIRONMENTS.DEVELOPMENT, release: 'R2.1' },
-      { code: 'T003', teambox_name: 'Team Gamma', environment: ENVIRONMENTS.STAGING, release: 'R2.1' }
+      { code: 'T003', teambox_name: 'Team Gamma', environment: ENVIRONMENTS.DEVELOPMENT, release: 'R2.1' }
     ]
     await fileStorage.writeJson(`${DATA_PATHS.TEAMBOX}/mappings.json`, sampleTeamboxMappings)
 

@@ -11,10 +11,14 @@ This application uses a two-repository architecture:
 
 Add these environment variables in your Vercel dashboard:
 
-### Required for XML Files Repository
+### Required for XML Files Repository (Environment-Specific)
 ```
 GITHUB_TOKEN=your_github_personal_access_token_here
-XML_REPO_URL=https://github.com/K3NTAW/xml-test-repo.git
+
+# Environment-specific XML repositories
+XML_REPO_URL_PROD=https://github.com/K3NTAW/xml-prod.git
+XML_REPO_URL_DEV=https://github.com/K3NTAW/xml-dev.git
+XML_REPO_URL_DEFAULT=https://github.com/K3NTAW/xml-test-repo.git
 ```
 
 ### Other Required Variables
@@ -30,17 +34,25 @@ NEXTAUTH_SECRET=your_nextauth_secret_here
 
 1. Go to GitHub Settings → Developer settings → Personal access tokens
 2. Generate a new token with these permissions:
-   - `repo` (Full control of private repositories)
+   - `repo` (Full control of private repositories) - **This is the most important one**
    - `workflow` (Update GitHub Action workflows)
+   - Make sure to select **"All repositories"** or specifically select your XML repository
 3. Copy the token and add it as `GITHUB_TOKEN` in Vercel
 
 ## XML Files Repository Setup
 
-1. Create a new repository (any name you prefer)
-2. Initialize with a README.md
-3. Copy the repository URL (e.g., `https://github.com/K3NTAW/your-repo-name.git`)
-4. Set the `XML_REPO_URL` environment variable to this URL
-5. The application will automatically push XML files to this repository
+Create separate repositories for each environment:
+
+1. **Production**: Create `xml-prod` repository
+2. **Development**: Create `xml-dev` repository
+3. **Default**: Create `xml-test-repo` repository (fallback)
+
+For each repository:
+- Initialize with a README.md
+- Copy the repository URL
+- Set the corresponding environment variable (e.g., `XML_REPO_URL_PROD`)
+
+The application will automatically push XML files to the correct repository based on the selected environment.
 
 ## How It Works
 

@@ -134,7 +134,7 @@ export default function HomePage() {
                     <h4 className="font-semibold mb-2">Configuration:</h4>
                     <ul className="space-y-1 text-sm text-muted-foreground">
                       <li>• Select release (R1.0, R2.1, etc.)</li>
-                      <li>• Choose environment (dev/staging/prod)</li>
+                      <li>• Choose environment (dev/prod)</li>
                       <li>• Optional story number</li>
                       <li>• Automatic timestamping</li>
                     </ul>

@@ -5,7 +5,6 @@ export const APP_VERSION = '1.0.0'
 // Environments
 export const ENVIRONMENTS = {
   DEVELOPMENT: 'development',
-  STAGING: 'staging',
   PRODUCTION: 'production'
 } as const
 

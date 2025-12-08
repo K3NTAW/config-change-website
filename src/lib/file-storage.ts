@@ -1,6 +1,5 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { DATA_PATHS } from '@/constants'
 
 // Simple file-based storage utilities
 export class FileStorage {

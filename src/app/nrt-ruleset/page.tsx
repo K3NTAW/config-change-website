@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Upload, FileText, GitBranch, CheckCircle, AlertCircle } from 'lucide-react'
+import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export default function NRTRulesetPage() {
@@ -16,6 +16,16 @@ export default function NRTRulesetPage() {
   const [environment, setEnvironment] = useState('')
   const [storyNumber, setStoryNumber] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showDiff, setShowDiff] = useState(false)
+  const [diffData, setDiffData] = useState<{
+    hasChanges: boolean
+    diff: string
+    diffStat: string
+    currentContent: string
+    newContent: string
+    fileName: string
+    isNewFile?: boolean
+  } | null>(null)
   const [result, setResult] = useState<{
     success: boolean
     message: string
@@ -23,6 +33,7 @@ export default function NRTRulesetPage() {
     gitCommit?: string
     gitPush?: string
   } | null>(null)
+
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -34,11 +45,53 @@ export default function NRTRulesetPage() {
     }
   }
 
-  const handleProcess = async () => {
+  const handlePreview = async () => {
     if (!selectedFile || !release || !environment) {
-      alert('Please fill in all required fields')
+      alert('Please fill in all required fields and upload a file')
       return
     }
+
+    setIsProcessing(true)
+    setResult(null)
+    setShowDiff(false)
+    setDiffData(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', selectedFile)
+      formData.append('action', 'preview')
+      formData.append('release', release)
+      formData.append('environment', environment)
+      formData.append('storyNumber', storyNumber)
+
+      const response = await fetch('/api/nrt-ruleset/process', {
+        method: 'POST',
+        body: formData
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        setDiffData(data)
+        setShowDiff(true)
+      } else {
+        setResult({
+          success: false,
+          message: data.message
+        })
+      }
+    } catch (error) {
+      setResult({
+        success: false,
+        message: 'Error generating preview: ' + (error as Error).message
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handlePush = async () => {
+    if (!selectedFile || !release || !environment) return
 
     setIsProcessing(true)
     setResult(null)
@@ -46,25 +99,34 @@ export default function NRTRulesetPage() {
     try {
       const formData = new FormData()
       formData.append('file', selectedFile)
+      formData.append('action', 'push')
       formData.append('release', release)
       formData.append('environment', environment)
       formData.append('storyNumber', storyNumber)
+      formData.append('acknowledge', 'true')
 
       const response = await fetch('/api/nrt-ruleset/process', {
         method: 'POST',
-        body: formData,
+        body: formData
       })
 
       const data = await response.json()
       setResult(data)
+      setShowDiff(false)
+      setDiffData(null)
     } catch (error) {
       setResult({
         success: false,
-        message: 'Error processing file: ' + (error as Error).message
+        message: 'Error pushing changes: ' + (error as Error).message
       })
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handleCancel = () => {
+    setShowDiff(false)
+    setDiffData(null)
   }
 
   return (
@@ -145,7 +207,6 @@ export default function NRTRulesetPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="development">Development</SelectItem>
-                        <SelectItem value="staging">Staging</SelectItem>
                         <SelectItem value="production">Production</SelectItem>
                       </SelectContent>
                     </Select>
@@ -160,30 +221,115 @@ export default function NRTRulesetPage() {
                     placeholder="e.g., NRT-123"
                   />
                 </div>
+                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    <strong>Automatic Macro Detection:</strong> The system will automatically detect and run all applicable macros based on the sheets in your Excel file, just like the old Excel file did.
+                  </p>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Process Button */}
-            <div className="flex justify-center">
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-4">
               <Button
-                onClick={handleProcess}
+                onClick={handlePreview}
                 disabled={!selectedFile || !release || !environment || isProcessing}
                 size="lg"
+                variant="outline"
                 className="min-w-48"
               >
                 {isProcessing ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                    Processing...
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                    Generating Preview...
                   </>
                 ) : (
                   <>
-                    <GitBranch className="h-4 w-4 mr-2" />
-                    Generate XML & Push to GIT
+                    <FileText className="h-4 w-4 mr-2" />
+                    Preview Changes
                   </>
                 )}
               </Button>
             </div>
+
+            {/* Diff Preview Section */}
+            {showDiff && diffData && (
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertCircle className="h-5 w-5" />
+                    Changes Preview
+                  </CardTitle>
+                  <CardDescription>
+                    {diffData.isNewFile 
+                      ? `This will create a new file: ${diffData.fileName}`
+                      : `Changes to ${diffData.fileName}`
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {diffData.hasChanges ? (
+                    <div className="space-y-4">
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {diffData.isNewFile 
+                            ? 'This will create a new XML file in the repository.'
+                            : 'The following changes will be made to the existing file:'
+                          }
+                        </AlertDescription>
+                      </Alert>
+                      
+                      {/* Diff Stat Summary */}
+                      <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg font-mono text-sm">
+                        <pre className="text-gray-700 dark:text-gray-300">{diffData.diffStat}</pre>
+                      </div>
+                      
+                      <div className="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                        <pre>{diffData.diff}</pre>
+                      </div>
+                      
+                      <div className="flex justify-center gap-4">
+                        <Button
+                          onClick={handlePush}
+                          disabled={isProcessing}
+                          size="lg"
+                          className="min-w-32"
+                        >
+                          {isProcessing ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                              Pushing...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Push Changes
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleCancel}
+                          disabled={isProcessing}
+                          variant="outline"
+                          size="lg"
+                          className="min-w-32"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Alert>
+                      <CheckCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        No changes detected. The file content is identical to what&apos;s already in the repository.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Result Section */}
             {result && (

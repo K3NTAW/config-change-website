@@ -7,9 +7,15 @@ import * as diff from 'diff'
 import { listMacros, autoDetectAndExecuteMacros } from '@/lib/macros'
 
 // Initialize GitHub API client
-const octokit = new Octokit({
-  auth: process.env.GITHUB_TOKEN,
-})
+const getOctokit = () => {
+  const token = process.env.GITHUB_TOKEN
+  if (!token) {
+    throw new Error('GITHUB_TOKEN environment variable is not set. Please configure it in your Vercel environment variables.')
+  }
+  return new Octokit({
+    auth: token,
+  })
+}
 
 // GET endpoint to list available macros
 export async function GET() {
@@ -122,6 +128,7 @@ async function handlePreview(release: string, environment: string, storyNumber?:
       const repoName = urlMatch[2]
 
       try {
+        const octokit = getOctokit()
         const { data: currentFile } = await octokit.rest.repos.getContent({
           owner: repoOwner,
           repo: repoName,
@@ -165,6 +172,10 @@ async function handlePreview(release: string, environment: string, storyNumber?:
             skippedMacros: []
           })
         }
+        // Handle GitHub authentication errors
+        if ((error as { status?: number }).status === 401) {
+          throw new Error('GitHub authentication failed. Please check that GITHUB_TOKEN is set correctly in Vercel environment variables and has the required permissions (repo scope).')
+        }
         throw error
       }
     }
@@ -205,6 +216,7 @@ async function handlePreview(release: string, environment: string, storyNumber?:
     const repoName = urlMatch[2]
 
     try {
+      const octokit = getOctokit()
       const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: repoOwner,
         repo: repoName,
@@ -250,15 +262,32 @@ async function handlePreview(release: string, environment: string, storyNumber?:
           allResults: autoDetectResult.allResults
         })
       }
+      // Handle GitHub authentication errors
+      if ((error as { status?: number }).status === 401) {
+        throw new Error('GitHub authentication failed. Please check that GITHUB_TOKEN is set correctly in Vercel environment variables and has the required permissions (repo scope).')
+      }
       throw error
     }
 
   } catch (error) {
     console.error('Error in preview:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    let status = 500
+    let message = `Error generating preview: ${errorMessage}`
+    
+    // Provide more helpful error messages for common issues
+    if (errorMessage.includes('GITHUB_TOKEN')) {
+      message = errorMessage
+      status = 500
+    } else if (errorMessage.includes('authentication failed')) {
+      message = errorMessage
+      status = 401
+    }
+    
     return NextResponse.json({
       success: false,
-      message: 'Error generating preview: ' + (error as Error).message
-    }, { status: 500 })
+      message
+    }, { status })
   }
 }
 
@@ -335,6 +364,7 @@ async function handlePush(release: string, environment: string, storyNumber?: st
     let gitCommit = null
     let gitPush = null
     try {
+      const octokit = getOctokit()
       // Get current commit SHA
       const { data: refData } = await octokit.rest.git.getRef({
         owner: repoOwner,
@@ -393,8 +423,14 @@ async function handlePush(release: string, environment: string, storyNumber?: st
       gitPush = 'Pushed to remote repository successfully'
       
     } catch (error) {
-      console.warn('GitHub API operation failed:', error)
-      // Continue without failing the entire operation
+      console.error('GitHub API operation failed:', error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      if (errorMessage.includes('Bad credentials') || (error as { status?: number }).status === 401) {
+        gitPush = 'Push failed: GitHub authentication error. Please check GITHUB_TOKEN in Vercel environment variables.'
+      } else {
+        gitPush = `Push failed: ${errorMessage}`
+      }
+      // Continue without failing the entire operation, but log the error
     }
 
     return NextResponse.json({

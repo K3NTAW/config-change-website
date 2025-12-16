@@ -3,7 +3,7 @@
  */
 
 import * as XLSX from 'xlsx'
-import type { MacroConfig, MacroExecutionContext, MacroResult } from './types'
+import type { MacroConfig, MacroResult } from './types'
 import {
   XMLcreate,
   XMLAddLoop,
@@ -24,8 +24,8 @@ export async function executeMacro(
   file: File,
   config: MacroConfig,
   release: string,
-  environment: string,
-  storyNumber?: string
+  _environment: string,
+  _storyNumber?: string
 ): Promise<MacroResult[]> {
   try {
     // Read Excel file

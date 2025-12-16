@@ -2,6 +2,8 @@
  * Type definitions for macro processing
  */
 
+import type * as XLSX from 'xlsx'
+
 export interface MacroConfig {
   // Excel sheet name
   xlSheet: string
@@ -38,7 +40,7 @@ export interface MacroConfig {
 }
 
 export interface MacroExecutionContext {
-  workbook: any // XLSX workbook
+  workbook: XLSX.WorkBook
   release: string
   environment: string
   storyNumber?: string

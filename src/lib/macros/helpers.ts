@@ -4,7 +4,6 @@
  */
 
 import * as XLSX from 'xlsx'
-import type { MacroConfig, ProcessedField } from './types'
 
 /**
  * Create XML header for DVM ruleset
@@ -28,7 +27,7 @@ export function XMLAddLoop(): string {
  * Add a list to XML
  */
 export function XMLAddList(
-  businessComponent: string,
+  _businessComponent: string,
   returnCode: string,
   defaultValues: string,
   sequence: number,
@@ -80,10 +79,10 @@ export function XMLAddList(
  * Check and add empty list if needed
  */
 export function XMLCheckAddEmpty(
-  businessComponent: string,
-  returnCode: string,
-  defaultValues: string,
-  sequence: number
+  _businessComponent: string,
+  _returnCode: string,
+  _defaultValues: string,
+  _sequence: number
 ): string {
   // If sequence is 1 and no rules exist, add empty list
   // This is a simplified version - adjust based on actual VBA logic
@@ -93,7 +92,7 @@ export function XMLCheckAddEmpty(
 /**
  * Close XML
  */
-export function XMLclose(fields: string): string {
+export function XMLclose(_fields: string): string {
   return `
     </BusinessComponent>
   </IntObject>
@@ -201,7 +200,7 @@ export function getFilteredFields(
   startRow: number,
   filter: string,
   filterField: string,
-  sequence: number
+  _sequence: number
 ): {
   hasMore: boolean
   nextRow: number
@@ -210,7 +209,7 @@ export function getFilteredFields(
   outList: string
 } {
   const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1')
-  let currentRow = startRow
+  const currentRow = startRow
   
   // Find text column index
   const textColIndex = allXLFields.indexOf(inXLText)

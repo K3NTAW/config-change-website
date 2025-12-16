@@ -40,7 +40,6 @@ export async function parseMacroFile(filePath: string): Promise<ParsedMacro> {
   // Extract constants from VBA code
   const constPattern = /Const\s+(\w+)\s+As\s+String\s*=\s*"([^"]+)"/gi
   const boolPattern = /Const\s+(\w+)\s+As\s+Boolean\s*=\s*(True|False)/gi
-  const dimPattern = /Dim\s+(\w+)\s+As\s+String/gi
   
   let match
   
@@ -48,8 +47,10 @@ export async function parseMacroFile(filePath: string): Promise<ParsedMacro> {
   while ((match = constPattern.exec(content)) !== null) {
     const [, name, value] = match
     const configKey = mapVBAConstantToConfig(name)
-    if (configKey) {
-      config[configKey] = value
+    if (configKey && configKey !== 'outLoop') {
+      // Type-safe assignment: configKey is guaranteed to be a string property here
+      type StringConfigKeys = Exclude<keyof ParsedMacro['config'], 'outLoop'>
+      ;(config as Record<StringConfigKeys, string | undefined>)[configKey as StringConfigKeys] = value
     }
   }
   
@@ -57,7 +58,7 @@ export async function parseMacroFile(filePath: string): Promise<ParsedMacro> {
   while ((match = boolPattern.exec(content)) !== null) {
     const [, name, value] = match
     const configKey = mapVBAConstantToConfig(name)
-    if (configKey) {
+    if (configKey && configKey === 'outLoop') {
       config[configKey] = value === 'True'
     }
   }

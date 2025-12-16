@@ -4,8 +4,7 @@ import { DATA_PATHS } from '@/constants'
 import { Octokit } from '@octokit/rest'
 import * as XLSX from 'xlsx'
 import * as diff from 'diff'
-import { loadMacro, listMacros, executeMacro, autoDetectAndExecuteMacros } from '@/lib/macros'
-import type { MacroConfig } from '@/lib/macros/types'
+import { listMacros, autoDetectAndExecuteMacros } from '@/lib/macros'
 
 // Initialize GitHub API client
 const octokit = new Octokit({
@@ -85,7 +84,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handlePreview(release: string, environment: string, storyNumber?: string, file?: File, macroName?: string) {
+async function handlePreview(release: string, environment: string, storyNumber?: string, file?: File, _macroName?: string) {
   try {
     if (!file) {
       return NextResponse.json({
@@ -263,7 +262,7 @@ async function handlePreview(release: string, environment: string, storyNumber?:
   }
 }
 
-async function handlePush(release: string, environment: string, storyNumber?: string, file?: File, macroName?: string) {
+async function handlePush(release: string, environment: string, storyNumber?: string, file?: File, _macroName?: string) {
   try {
     if (!file) {
       return NextResponse.json({

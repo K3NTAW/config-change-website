@@ -36,6 +36,14 @@ export default function HomePage() {
                 <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
+            <div className="mt-4 flex items-center justify-center">
+              <Link
+                href="/poc"
+                className="inline-flex h-10 items-center justify-center rounded-full border border-[#0055FF] px-6 text-sm font-medium text-[#0055FF] transition-colors hover:bg-[#EAF0FF]"
+              >
+                Open Auth/RBAC/Audit PoC
+              </Link>
+            </div>
           </div>
         </section>
 

@@ -4,27 +4,27 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
-import { APP_NAME } from '@/constants'
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/95 shadow-sm backdrop-blur">
+      <div className="container flex h-16 items-center justify-between px-4 md:px-8">
         {/* Logo and Navigation */}
-        <div className="flex items-center space-x-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded bg-primary"></div>
-            <span className="text-xl font-bold">{APP_NAME}</span>
+        <div className="flex items-center space-x-8">
+          <Link href="/" className="group flex items-center space-x-2">
+            <span className="text-xl font-semibold tracking-tighter text-[#001D70] transition-colors group-hover:text-[#0055FF]">
+              NRT-Automation
+            </span>
           </Link>
           
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/" className="text-sm font-medium hover:text-primary">
+            <Link href="/" className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]">
               Home
             </Link>
-            <Link href="/nrt-ruleset" className="text-sm font-medium hover:text-primary">
+            <Link href="/nrt-ruleset" className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]">
               NRT Ruleset
             </Link>
           </nav>
@@ -34,27 +34,27 @@ export function Header() {
         <Button
           variant="ghost"
           size="sm"
-          className="md:hidden"
+          className="text-slate-600 hover:text-[#0055FF] md:hidden"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          {isMobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden border-t bg-background">
+        <div className="border-t border-slate-100 bg-white md:hidden">
           <nav className="container py-4 space-y-2">
             <Link
               href="/"
-              className="block px-3 py-2 text-sm font-medium hover:text-primary"
+              className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Home
             </Link>
             <Link
               href="/nrt-ruleset"
-              className="block px-3 py-2 text-sm font-medium hover:text-primary"
+              className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               NRT Ruleset

@@ -9,12 +9,12 @@ Sie ist für eine **30-Minuten Sitzung (15 min PoC + 15 min Validierung)** ausge
 
 ## 0) Sitzungs-Metadaten
 
-- **Datum:** ____________________
-- **Uhrzeit:** ____________________
+- **Datum:** _________09.04.2026___________
+- **Uhrzeit:** ______14:30______________
 - **Dauer gesamt:** 30 Minuten
-- **Teilnehmer:** Damir Peric, Waibel Kenta
-- **Umgebung (lokal/stage):** ____________________
-- **PoC-Version/Branch:** ____________________
+- **Teilnehmer:** Damir Peric, Waibel Kenta, Hübscher Kay
+- **Umgebung (lokal/stage):** _______lokal_____________
+- **PoC-Version/Branch:** ___________________
 
 ---
 

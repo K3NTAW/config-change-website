@@ -38,13 +38,8 @@ export async function initializeData() {
     ]
     await fileStorage.writeJson(`${DATA_PATHS.TEAMBOX}/matrix.json`, sampleMatrix)
 
-    // Create empty audit log
-    await fileStorage.writeJson(`${DATA_PATHS.AUDIT_LOGS}/audit.json`, [])
-
-    console.log('✅ Data initialized successfully')
     return true
-  } catch (error) {
-    console.error('❌ Failed to initialize data:', error)
+  } catch {
     return false
   }
 }

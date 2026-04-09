@@ -49,7 +49,6 @@ export const DEPLOYMENT_CONFIG = {
 export const DATA_PATHS = {
   TEAMBOX: 'data/teambox',
   XML_FILES: 'data/xml-files',
-  AUDIT_LOGS: 'data/audit-logs',
   CONFIG: 'data/config'
 } as const
 

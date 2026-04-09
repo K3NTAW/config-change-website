@@ -6,10 +6,9 @@ A modern web application for automating the NRT Rules framework, transitioning f
 
 - **Teambox Assignment Management**: Automate teambox mapping based on specific codes
 - **XML File Generation**: Generate XML files with release and environment support
-- **GIT Integration**: Automatic version control with audit trails
+- **GIT Integration**: Automatic commit and push workflow with diff preview
 - **Siebel Deployment**: Seamless deployment to Siebel CRM
 - **User Management**: Role-based access control and authentication
-- **Audit Logging**: Complete audit trail for all operations
 - **Notifications**: Configurable email notifications
 - **Analytics**: Performance metrics and usage tracking
 
@@ -18,7 +17,7 @@ A modern web application for automating the NRT Rules framework, transitioning f
 - **Frontend**: Next.js 14+ with TypeScript
 - **UI Library**: shadcn/ui components
 - **Backend**: Next.js API routes + Python services
-- **Database**: Supabase (PostgreSQL)
+- **Storage**: File-based JSON data under `data/`
 - **Deployment**: Vercel
 - **Excel Integration**: Python (openpyxl/xlwings)
 - **GIT Integration**: simple-git library
@@ -57,11 +56,6 @@ npm run dev
 Create a `.env.local` file with the following variables:
 
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
-
 # NextAuth Configuration
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret_here
@@ -83,13 +77,6 @@ DEPLOYMENT_SCRIPT_PATH=/app/sbl/sblhome/deploy/NRT_import.sh
 SIEBEL_ENVIRONMENT=development
 ```
 
-### Supabase Setup
-
-1. Create a new Supabase project
-2. Run the database migrations (coming soon)
-3. Configure authentication providers
-4. Set up Row Level Security (RLS) policies
-
 ## 📁 Project Structure
 
 ```
@@ -100,7 +87,6 @@ src/
 │   ├── layout/            # Layout components
 │   └── features/          # Feature-specific components
 ├── lib/                   # Utility libraries
-│   ├── supabase/          # Supabase client configuration
 │   ├── auth/              # Authentication utilities
 │   ├── excel/             # Excel integration
 │   ├── git/               # GIT integration

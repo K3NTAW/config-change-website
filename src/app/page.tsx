@@ -97,7 +97,7 @@ export default function HomePage() {
                 <ul className="space-y-2 text-sm text-muted-foreground">
                   <li>• Automatic GIT commit</li>
                   <li>• Story number tracking</li>
-                  <li>• Audit trail logging</li>
+                  <li>• Git diff preview</li>
                 </ul>
               </CardContent>
             </Card>
@@ -127,7 +127,7 @@ export default function HomePage() {
                       <li>• Uploads and validates Excel files</li>
                       <li>• Generates XML with proper naming</li>
                       <li>• Commits to GIT with story tracking</li>
-                      <li>• Maintains audit trail</li>
+                      <li>• Shows git-style diffs before push</li>
                     </ul>
                   </div>
                   <div>

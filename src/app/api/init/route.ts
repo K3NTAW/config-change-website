@@ -25,8 +25,7 @@ export async function POST() {
         message: 'Failed to initialize data' 
       }, { status: 500 })
     }
-  } catch (error) {
-    console.error('Init API error:', error)
+  } catch {
     return NextResponse.json({ 
       success: false, 
       message: 'Internal server error' 
@@ -41,8 +40,7 @@ export async function GET() {
       initialized,
       message: initialized ? 'Data is initialized' : 'Data not initialized'
     })
-  } catch (error) {
-    console.error('Init check error:', error)
+  } catch {
     return NextResponse.json({ 
       initialized: false,
       message: 'Error checking initialization status'

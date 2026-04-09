@@ -105,8 +105,7 @@ export async function listMacros(macrosDir: string = 'src/lib/macros'): Promise<
     return files
       .filter(file => file.endsWith('.md') && file !== 'all.md')
       .map(file => path.basename(file, '.md'))
-  } catch (error) {
-    console.error('Error listing macros:', error)
+  } catch {
     return []
   }
 }
@@ -118,8 +117,7 @@ export async function loadMacro(macroName: string, macrosDir: string = 'src/lib/
   try {
     const filePath = path.join(process.cwd(), macrosDir, `${macroName}.md`)
     return await parseMacroFile(filePath)
-  } catch (error) {
-    console.error(`Error loading macro ${macroName}:`, error)
+  } catch {
     return null
   }
 }

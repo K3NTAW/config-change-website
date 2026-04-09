@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fileStorage } from '@/lib/file-storage'
-import { DATA_PATHS } from '@/constants'
 import { Octokit } from '@octokit/rest'
 import * as XLSX from 'xlsx'
 import * as diff from 'diff'
@@ -82,7 +80,6 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
 
   } catch (error) {
-    console.error('Error processing NRT Ruleset:', error)
     return NextResponse.json({
       success: false,
       message: 'Error processing NRT Ruleset: ' + (error as Error).message
@@ -270,7 +267,6 @@ async function handlePreview(release: string, environment: string, storyNumber?:
     }
 
   } catch (error) {
-    console.error('Error in preview:', error)
     const errorMessage = error instanceof Error ? error.message : String(error)
     let status = 500
     let message = `Error generating preview: ${errorMessage}`
@@ -352,14 +348,6 @@ async function handlePush(release: string, environment: string, storyNumber?: st
     const repoOwner = urlMatch[1]
     const repoName = urlMatch[2]
 
-    // Log the operation
-    await logOperation('nrt-ruleset-process', {
-      xmlFileName,
-      release,
-      environment,
-      storyNumber: storyNumber || 'N/A'
-    })
-
     // Push to GitHub XML repository using API
     let gitCommit = null
     let gitPush = null
@@ -423,7 +411,6 @@ async function handlePush(release: string, environment: string, storyNumber?: st
       gitPush = 'Pushed to remote repository successfully'
       
     } catch (error) {
-      console.error('GitHub API operation failed:', error)
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('Bad credentials') || (error as { status?: number }).status === 401) {
         gitPush = 'Push failed: GitHub authentication error. Please check GITHUB_TOKEN in Vercel environment variables.'
@@ -443,7 +430,6 @@ async function handlePush(release: string, environment: string, storyNumber?: st
     })
 
   } catch (error) {
-    console.error('Error in push:', error)
     return NextResponse.json({
       success: false,
       message: 'Error pushing changes: ' + (error as Error).message
@@ -555,7 +541,6 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
     
     return xmlContent
   } catch (error) {
-    console.error('Error processing Excel file:', error)
     // Fallback XML if Excel processing fails
     return `<?xml version="1.0" encoding="UTF-8"?>
 <excel-data>
@@ -667,34 +652,4 @@ function generateDiffStat(oldContent: string, newContent: string): string {
   stat += `\n 1 file changed, ${insertions} insertion${insertions === 1 ? '' : 's'}(+), ${deletions} deletion${deletions === 1 ? '' : 's'}(-)`
   
   return stat
-}
-
-// Log operation to audit trail
-async function logOperation(
-  action: string, 
-  details: Record<string, unknown> & { storyNumber?: string; xmlFileName?: string }
-) {
-  try {
-    type AuditLogEntry = {
-      timestamp: string
-      action: string
-      details: string
-      story_number: string
-      file_name?: string
-    }
-    
-    const auditLog = (await fileStorage.readJson<AuditLogEntry[]>(`${DATA_PATHS.AUDIT_LOGS}/audit.json`)) || []
-    
-    auditLog.push({
-      timestamp: new Date().toISOString(),
-      action,
-      details: JSON.stringify(details),
-      story_number: details.storyNumber || 'N/A',
-      file_name: details.xmlFileName
-    })
-
-    await fileStorage.writeJson(`${DATA_PATHS.AUDIT_LOGS}/audit.json`, auditLog)
-  } catch (error) {
-    console.error('Failed to log operation:', error)
-  }
 }

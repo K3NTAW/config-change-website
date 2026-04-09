@@ -84,7 +84,6 @@ export async function POST(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Error getting diff:', error)
     return NextResponse.json({
       success: false,
       message: 'Error getting diff: ' + (error as Error).message

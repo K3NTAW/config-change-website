@@ -1,6 +1,6 @@
-import { AuditCategory } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { logWarn } from "@/lib/logger";
+import { writeAudit } from "@/lib/audit/audit-service";
 
 export async function listUsers() {
   return prisma.user.findMany({
@@ -38,14 +38,12 @@ export async function assignRole(
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id: targetUserId }, data: { roleId: role.id } });
-    await tx.auditLog.create({
-      data: {
-        category: AuditCategory.RBAC,
-        action: "ROLE_ASSIGNED",
-        resource: targetUserId,
-        userId: adminUserId,
-        payload: { newRole: newRoleName, targetUsername: user.username },
-      },
+    await writeAudit(tx, {
+      category: "RBAC",
+      action: "ROLE_ASSIGNED",
+      resource: targetUserId,
+      userId: adminUserId,
+      payload: { newRole: newRoleName, targetUsername: user.username },
     });
   });
 
@@ -68,14 +66,12 @@ export async function deactivateUser(
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({ where: { id: targetUserId }, data: { isActive: false } });
-    await tx.auditLog.create({
-      data: {
-        category: AuditCategory.ACCOUNT,
-        action: "USER_DEACTIVATED",
-        resource: targetUserId,
-        userId: adminUserId,
-        payload: { targetUsername: user.username },
-      },
+    await writeAudit(tx, {
+      category: "ACCOUNT",
+      action: "USER_DEACTIVATED",
+      resource: targetUserId,
+      userId: adminUserId,
+      payload: { targetUsername: user.username },
     });
   });
 

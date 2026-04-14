@@ -3,6 +3,9 @@ import { Octokit } from '@octokit/rest'
 import * as XLSX from 'xlsx'
 import * as diff from 'diff'
 import { listMacros, autoDetectAndExecuteMacros } from '@/lib/macros'
+import { prisma } from '@/lib/db/prisma'
+import { logRuleChange } from '@/lib/nrt/rule-change-service'
+import { getSessionFromRequest } from '@/lib/auth/request-session'
 
 // Initialize GitHub API client
 const getOctokit = () => {
@@ -71,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Handle push request
     if (action === 'push' && acknowledge) {
-      return handlePush(release, environment, storyNumber, file, macroName)
+      return handlePush(request, release, environment, storyNumber, file, macroName)
     }
 
     return NextResponse.json({
@@ -287,7 +290,7 @@ async function handlePreview(release: string, environment: string, storyNumber?:
   }
 }
 
-async function handlePush(release: string, environment: string, storyNumber?: string, file?: File, _macroName?: string) {
+async function handlePush(request: NextRequest, release: string, environment: string, storyNumber?: string, file?: File, _macroName?: string) {
   try {
     if (!file) {
       return NextResponse.json({
@@ -409,7 +412,21 @@ async function handlePush(release: string, environment: string, storyNumber?: st
       
       gitCommit = `Commit: ${newCommit.sha}`
       gitPush = 'Pushed to remote repository successfully'
-      
+
+      // IPA-211: write audit record for the rule change
+      const session = await getSessionFromRequest(request)
+      const pushDiff = await generateGitDiff('', xmlContent)
+      await logRuleChange(prisma, {
+        jiraRef: storyNumber ? `NRT-${storyNumber}` : 'NRT-AUTO',
+        diff: pushDiff,
+        fileName: xmlFileName,
+        release,
+        environment,
+        commitSha: newCommit.sha,
+        userId: session?.sub ?? null,
+        ipAddress: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? null,
+      })
+
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('Bad credentials') || (error as { status?: number }).status === 401) {

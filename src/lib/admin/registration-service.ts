@@ -1,8 +1,9 @@
 import { randomBytes } from "node:crypto";
 import { hash } from "bcryptjs";
-import { AuditCategory, RegistrationStatus } from "@prisma/client";
+import { RegistrationStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { sendTempPasswordEmail } from "@/lib/mail/send-temp-password-email";
+import { writeAudit } from "@/lib/audit/audit-service";
 
 const ROUNDS = 12;
 
@@ -61,14 +62,12 @@ export async function approveRegistration(requestId: string, adminUserId: string
       where: { id: row.id },
       data: { status: RegistrationStatus.APPROVED },
     });
-    await tx.auditLog.create({
-      data: {
-        category: AuditCategory.AUTH,
-        action: "REGISTRATION_APPROVED",
-        resource: row.id,
-        userId: adminUserId,
-        payload: { targetUsername: row.username },
-      },
+    await writeAudit(tx, {
+      category: "AUTH",
+      action: "REGISTRATION_APPROVED",
+      resource: row.id,
+      userId: adminUserId,
+      payload: { targetUsername: row.username },
     });
   });
 
@@ -101,14 +100,12 @@ export async function rejectRegistration(
         rejectionReason: reason?.trim() || null,
       },
     });
-    await tx.auditLog.create({
-      data: {
-        category: AuditCategory.AUTH,
-        action: "REGISTRATION_REJECTED",
-        resource: row.id,
-        userId: adminUserId,
-        payload: { reason: reason ?? null },
-      },
+    await writeAudit(tx, {
+      category: "AUTH",
+      action: "REGISTRATION_REJECTED",
+      resource: row.id,
+      userId: adminUserId,
+      payload: { reason: reason ?? null },
     });
   });
 

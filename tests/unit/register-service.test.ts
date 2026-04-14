@@ -7,6 +7,7 @@ vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     user: { findFirst: vi.fn() },
     registrationRequest: { findFirst: vi.fn(), create: vi.fn() },
+    auditLog: { create: vi.fn().mockResolvedValue(undefined) },
   },
 }));
 

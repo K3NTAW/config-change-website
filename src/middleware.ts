@@ -7,6 +7,8 @@ import { isAdminPageRoute, ROLES } from "@/lib/auth/rbac";
 const PUBLIC_PATHS = [
   "/login",
   "/register",
+  "/forgot-password",
+  "/reset-password",
   "/unauthorized",
   "/api/auth/login",
   "/api/auth/register",

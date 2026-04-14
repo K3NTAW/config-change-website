@@ -3,6 +3,7 @@ import { RegistrationStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { registerRequestSchema } from "@/lib/validation/register";
 import { logWarn } from "@/lib/logger";
+import { writeAudit } from "@/lib/audit/audit-service";
 
 const BCRYPT_ROUNDS = 12;
 
@@ -81,6 +82,13 @@ export async function createRegistrationRequest(raw: unknown) {
       passwordHash,
       status: RegistrationStatus.PENDING_APPROVAL,
     },
+  });
+
+  await writeAudit(prisma, {
+    category: "AUTH",
+    action: "REGISTRATION_REQUESTED",
+    resource: row.id,
+    payload: { username },
   });
 
   return { id: row.id, status: row.status };

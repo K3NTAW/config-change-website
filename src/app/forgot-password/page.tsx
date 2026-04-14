@@ -6,30 +6,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function RegisterPage() {
+/**
+ * IPA-206: Forgot-password page — calls POST /api/auth/forgot-password.
+ * Always shows a success message regardless of whether the account exists
+ * (to prevent username enumeration).
+ */
+export default function ForgotPasswordPage() {
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({ username }),
       });
-      const data = (await res.json()) as { error?: string; id?: string; status?: string };
+
       if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
         setError(data.error ?? `HTTP ${res.status}`);
-      } else {
-        setSubmitted(true);
+        return;
       }
+
+      setSubmitted(true);
     } catch {
       setError("Netzwerkfehler. Bitte versuche es erneut.");
     } finally {
@@ -42,18 +48,18 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-6 rounded-2xl border border-slate-100 bg-white p-8 shadow-[0_2px_20px_rgba(0,0,0,0.05)]">
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-[#001D70]">
-            Registrierung
+            Passwort zurücksetzen
           </h1>
           <p className="text-sm text-slate-500">
-            Erstelle einen Zugangantrag für NRT Rules Automation.
+            Gib deine TAA-Kennung ein. Du erhältst eine E-Mail mit einem Reset-Link.
           </p>
         </div>
 
         {submitted ? (
           <div className="space-y-4">
             <div className="rounded-lg bg-green-50 px-4 py-4 text-sm text-green-700">
-              Dein Antrag wurde eingereicht. Ein Administrator wird ihn in Kürze prüfen.
-              Du erhältst eine E-Mail, sobald er genehmigt oder abgelehnt wurde.
+              Falls ein Konto mit dieser Kennung existiert, wurde eine Reset-E-Mail versendet.
+              Bitte überprüfe dein Postfach.
             </div>
             <Link
               href="/login"
@@ -77,31 +83,6 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Swisscom E-Mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="vorname.nachname@swisscom.com"
-                autoComplete="email"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Passwort (min. 12 Zeichen)</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="new-password"
-                required
-              />
-            </div>
-
             {error && (
               <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
                 {error}
@@ -109,13 +90,12 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Senden…" : "Antrag senden"}
+              {loading ? "Senden…" : "Reset-Link anfordern"}
             </Button>
 
             <p className="text-center text-sm text-slate-500">
-              Bereits registriert?{" "}
               <Link href="/login" className="text-[#0055FF] hover:underline">
-                Anmelden
+                Zurück zur Anmeldung
               </Link>
             </p>
           </form>

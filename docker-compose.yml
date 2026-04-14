@@ -1,0 +1,16 @@
+# Lokale PostgreSQL-Instanz für Entwicklung und DB-Tests (IPA-201)
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nrt
+      POSTGRES_PASSWORD: nrt
+      POSTGRES_DB: nrt_ipa
+    ports:
+      - "5432:5432"
+    volumes:
+      - nrt_ipa_pgdata:/var/lib/postgresql/data
+
+volumes:
+  nrt_ipa_pgdata:

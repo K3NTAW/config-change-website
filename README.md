@@ -17,7 +17,7 @@ A modern web application for automating the NRT Rules framework, transitioning f
 - **Frontend**: Next.js 14+ with TypeScript
 - **UI Library**: shadcn/ui components
 - **Backend**: Next.js API routes + Python services
-- **Storage**: File-based JSON data under `data/`
+- **Storage**: File-based JSON data under `data/` (NRT-Regeln); **PostgreSQL** für Auth/RBAC/Audit (IPA ab Sprint 2)
 - **Deployment**: Vercel
 - **Excel Integration**: Python (openpyxl/xlwings)
 - **GIT Integration**: simple-git library
@@ -38,16 +38,28 @@ npm install
 
 3. Set up environment variables:
 ```bash
-cp .env.example .env.local
-# Edit .env.local with your configuration
+cp .env.example .env
+# DATABASE_URL für PostgreSQL setzen (siehe unten)
 ```
 
-4. Run the development server:
+4. **Datenbank (IPA-201):** PostgreSQL starten, Migrationen und optional Seed ausführen:
+```bash
+docker compose up -d
+npx prisma migrate deploy
+npm run db:seed
+```
+Details und ER-Diagramm: [docs/DATENMODELL_IPA-201.md](./docs/DATENMODELL_IPA-201.md). Nach Schema-Erweiterungen immer `npx prisma migrate deploy` ausführen.
+
+Sign-up (IPA-202): [docs/SIGNUP_IPA-202.md](./docs/SIGNUP_IPA-202.md) — API `POST /api/auth/register`, Test-UI `/register`.
+
+Admin-Freigabe (IPA-203): [docs/APPROVAL_IPA-203.md](./docs/APPROVAL_IPA-203.md) — `JWT_SECRET` in `.env` setzen, Demo-Admin nach Seed (`npm run db:seed`), Test-UI `/admin/registrations`, APIs unter `/api/admin/registration-requests`.
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🔧 Configuration
 

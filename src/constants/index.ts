@@ -1,5 +1,9 @@
 // Application Constants
 export const APP_NAME = 'NRT Rules Automation'
+
+// Session / Auth
+export const SESSION_COOKIE_NAME = "nrt-session" as const;
+export const SESSION_MAX_AGE = 8 * 60 * 60; // 8 hours in seconds, matches JWT expiry
 export const APP_VERSION = '1.0.0'
 
 // Environments

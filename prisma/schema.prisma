@@ -1,0 +1,126 @@
+// IPA-201: Auth / RBAC / Audit — PostgreSQL via Prisma ORM
+// Tabellen: users, roles, sessions, audit_logs (@@map)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Anwendungsrollen (ADMIN, BASIC); Referenztabelle für RBAC.
+model Role {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+
+  users User[]
+
+  @@map("roles")
+}
+
+/// Benutzerkonto (TAA-Kennung, Passwort-Hash für spätere Credentials-Auth).
+model User {
+  id           String @id @default(cuid())
+  username     String @unique
+  email        String? @unique
+  passwordHash String?
+  isActive     Boolean @default(true)
+  /// Nach Freigabe mit temporärem Passwort: erst Login erzwingt Wechsel (IPA-204)
+  mustChangePassword Boolean @default(false)
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  sessions           Session[]
+  auditLogs          AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roleId])
+  @@map("users")
+}
+
+/// Sitzungen (kompatibel mit Auth.js / NextAuth Session-Modell).
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+enum AuditCategory {
+  /// NRT-Rule-Changes — laut Stakeholder für alle Authentifizierten sichtbar
+  NRT_RULE_CHANGE
+  /// Account-/kontospezifische Einträge — ADMIN-only
+  ACCOUNT
+  AUTH
+  RBAC
+  SYSTEM
+}
+
+/// Unveränderliches Audit-Log (Append-only über Applikationslogik).
+model AuditLog {
+  id         String        @id @default(cuid())
+  category   AuditCategory
+  action     String
+  resource   String?
+  payload    Json?
+  ipAddress  String?
+  userAgent  String?
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// IPA-206: Einmaliger Password-Reset-Token (SHA-256-Hash gespeichert, 1h gültig).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+/// IPA-202: Registrierungsantrag vor Admin-Freigabe (kein Login bis IPA-203).
+enum RegistrationStatus {
+  PENDING_APPROVAL
+  REJECTED
+  APPROVED
+}
+
+model RegistrationRequest {
+  id           String               @id @default(cuid())
+  username     String
+  email        String
+  passwordHash String
+  status       RegistrationStatus   @default(PENDING_APPROVAL)
+  rejectionReason String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([username])
+  @@index([email])
+  @@index([status])
+  @@map("registration_requests")
+}

@@ -3,7 +3,6 @@ import { verifySessionToken } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/constants";
 import { isAdminPageRoute, ROLES } from "@/lib/auth/rbac";
 
-// Routes that do not require authentication
 const PUBLIC_PATHS = [
   "/login",
   "/register",
@@ -36,14 +35,12 @@ export async function middleware(req: NextRequest) {
   try {
     const session = await verifySessionToken(token);
 
-    // IPA-207: enforce ADMIN role for admin page routes (Least Privilege)
     if (isAdminPageRoute(pathname) && session.role !== ROLES.ADMIN) {
       return NextResponse.redirect(new URL("/unauthorized", req.url));
     }
 
     return NextResponse.next();
   } catch {
-    // Expired or tampered token — clear cookie and redirect to login
     const res = NextResponse.redirect(new URL("/login", req.url));
     res.cookies.set(SESSION_COOKIE_NAME, "", { maxAge: 0, path: "/" });
     return res;

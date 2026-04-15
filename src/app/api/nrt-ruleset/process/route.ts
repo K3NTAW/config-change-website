@@ -7,7 +7,6 @@ import { prisma } from '@/lib/db/prisma'
 import { logRuleChange } from '@/lib/nrt/rule-change-service'
 import { getSessionFromRequest } from '@/lib/auth/request-session'
 
-// Initialize GitHub API client
 const getOctokit = () => {
   const token = process.env.GITHUB_TOKEN
   if (!token) {
@@ -18,7 +17,6 @@ const getOctokit = () => {
   })
 }
 
-// GET endpoint to list available macros
 export async function GET() {
   try {
     const macros = await listMacros()
@@ -40,17 +38,15 @@ export async function POST(request: NextRequest) {
     let action, release, environment, storyNumber, acknowledge, file, macroName
 
           if (contentType?.includes('multipart/form-data')) {
-            // Handle FormData (with file upload)
             const formData = await request.formData()
             action = formData.get('action') as string
             release = formData.get('release') as string
             environment = formData.get('environment') as string
             storyNumber = formData.get('storyNumber') as string
-            acknowledge = formData.get('acknowledge') === 'true' // Convert string to boolean
+            acknowledge = formData.get('acknowledge') === 'true'
             file = formData.get('file') as File
             macroName = formData.get('macroName') as string
           } else {
-            // Handle JSON
             const body = await request.json()
             action = body.action
             release = body.release
@@ -67,12 +63,10 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Handle preview request
     if (action === 'preview') {
       return handlePreview(release, environment, storyNumber, file, macroName)
     }
 
-    // Handle push request
     if (action === 'push' && acknowledge) {
       return handlePush(request, release, environment, storyNumber, file, macroName)
     }
@@ -99,15 +93,12 @@ async function handlePreview(release: string, environment: string, storyNumber?:
       }, { status: 400 })
     }
 
-    // Auto-detect and execute all applicable macros
     const autoDetectResult = await autoDetectAndExecuteMacros(file, release, environment, storyNumber)
     
     if (autoDetectResult.allResults.length === 0) {
-      // No macros matched, fall back to simple XML conversion
       const xmlContent = await generateXMLFromExcel(file, release, environment, storyNumber)
       const xmlFileName = file.name.replace('.xlsx', '.xml')
       
-      // Get repository URL based on environment
       let repoUrl
       switch (environment.toLowerCase()) {
         case 'production':
@@ -172,7 +163,6 @@ async function handlePreview(release: string, environment: string, storyNumber?:
             skippedMacros: []
           })
         }
-        // Handle GitHub authentication errors
         if ((error as { status?: number }).status === 401) {
           throw new Error('GitHub authentication failed. Please check that GITHUB_TOKEN is set correctly in Vercel environment variables and has the required permissions (repo scope).')
         }
@@ -180,7 +170,6 @@ async function handlePreview(release: string, environment: string, storyNumber?:
       }
     }
 
-    // Use the first successful macro result for preview
     const firstSuccessResult = autoDetectResult.allResults.find(r => r.success)
     if (!firstSuccessResult) {
       return NextResponse.json({
@@ -195,7 +184,6 @@ async function handlePreview(release: string, environment: string, storyNumber?:
     const xmlContent = firstSuccessResult.xmlContent
     const xmlFileName = firstSuccessResult.fileName
 
-    // Get repository URL based on environment
     let repoUrl
     switch (environment.toLowerCase()) {
       case 'production':
@@ -262,7 +250,6 @@ async function handlePreview(release: string, environment: string, storyNumber?:
           allResults: autoDetectResult.allResults
         })
       }
-      // Handle GitHub authentication errors
       if ((error as { status?: number }).status === 401) {
         throw new Error('GitHub authentication failed. Please check that GITHUB_TOKEN is set correctly in Vercel environment variables and has the required permissions (repo scope).')
       }
@@ -274,7 +261,6 @@ async function handlePreview(release: string, environment: string, storyNumber?:
     let status = 500
     let message = `Error generating preview: ${errorMessage}`
     
-    // Provide more helpful error messages for common issues
     if (errorMessage.includes('GITHUB_TOKEN')) {
       message = errorMessage
       status = 500
@@ -299,18 +285,15 @@ async function handlePush(request: NextRequest, release: string, environment: st
       }, { status: 400 })
     }
 
-    // Auto-detect and execute all applicable macros
     const autoDetectResult = await autoDetectAndExecuteMacros(file, release, environment, storyNumber)
     
     let xmlContent: string
     let xmlFileName: string
     
     if (autoDetectResult.allResults.length === 0) {
-      // No macros matched, fall back to simple XML conversion
       xmlContent = await generateXMLFromExcel(file, release, environment, storyNumber)
       xmlFileName = file.name.replace('.xlsx', '.xml')
     } else {
-      // Push all successful macro results
       const successfulResults = autoDetectResult.allResults.filter(r => r.success)
       
       if (successfulResults.length === 0) {
@@ -323,14 +306,11 @@ async function handlePush(request: NextRequest, release: string, environment: st
         }, { status: 500 })
       }
 
-      // For now, push the first successful result
-      // TODO: Extend to push all generated files
       const firstResult = successfulResults[0]
       xmlContent = firstResult.xmlContent
       xmlFileName = firstResult.fileName
     }
 
-    // Get repository URL based on environment
     let repoUrl
     switch (environment.toLowerCase()) {
       case 'production':
@@ -343,7 +323,6 @@ async function handlePush(request: NextRequest, release: string, environment: st
         repoUrl = process.env.XML_REPO_URL_DEFAULT || 'https://github.com/K3NTAW/xml-test-repo.git'
     }
 
-    // Parse repository URL to extract owner and name
     const urlMatch = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?$/)
     if (!urlMatch) {
       throw new Error('Invalid repository URL format')
@@ -351,26 +330,22 @@ async function handlePush(request: NextRequest, release: string, environment: st
     const repoOwner = urlMatch[1]
     const repoName = urlMatch[2]
 
-    // Push to GitHub XML repository using API
     let gitCommit = null
     let gitPush = null
     try {
       const octokit = getOctokit()
-      // Get current commit SHA
       const { data: refData } = await octokit.rest.git.getRef({
         owner: repoOwner,
         repo: repoName,
         ref: 'heads/main'
       })
       
-      // Get current tree
       const { data: commitData } = await octokit.rest.git.getCommit({
         owner: repoOwner,
         repo: repoName,
         commit_sha: refData.object.sha
       })
       
-      // Create blob for XML file only
       const xmlBlob = await octokit.rest.git.createBlob({
         owner: repoOwner,
         repo: repoName,
@@ -378,7 +353,6 @@ async function handlePush(request: NextRequest, release: string, environment: st
         encoding: 'base64'
       })
       
-      // Create new tree with only the XML file
       const { data: treeData } = await octokit.rest.git.createTree({
         owner: repoOwner,
         repo: repoName,
@@ -393,7 +367,6 @@ async function handlePush(request: NextRequest, release: string, environment: st
         ]
       })
       
-      // Create new commit
       const { data: newCommit } = await octokit.rest.git.createCommit({
         owner: repoOwner,
         repo: repoName,
@@ -402,7 +375,6 @@ async function handlePush(request: NextRequest, release: string, environment: st
         parents: [refData.object.sha]
       })
       
-      // Update branch reference
       await octokit.rest.git.updateRef({
         owner: repoOwner,
         repo: repoName,
@@ -413,7 +385,6 @@ async function handlePush(request: NextRequest, release: string, environment: st
       gitCommit = `Commit: ${newCommit.sha}`
       gitPush = 'Pushed to remote repository successfully'
 
-      // IPA-211: write audit record for the rule change
       const session = await getSessionFromRequest(request)
       const pushDiff = await generateGitDiff('', xmlContent)
       await logRuleChange(prisma, {
@@ -434,7 +405,6 @@ async function handlePush(request: NextRequest, release: string, environment: st
       } else {
         gitPush = `Push failed: ${errorMessage}`
       }
-      // Continue without failing the entire operation, but log the error
     }
 
     return NextResponse.json({
@@ -454,32 +424,25 @@ async function handlePush(request: NextRequest, release: string, environment: st
   }
 }
 
-// 1:1 XML conversion from Excel file - no changes, additions, or removals
 async function generateXMLFromExcel(file: File | undefined, release: string, environment: string, storyNumber?: string): Promise<string> {
   if (!file) {
     throw new Error('No file provided for XML generation')
   }
 
   try {
-    // Read the Excel file
     const arrayBuffer = await file.arrayBuffer()
     const workbook = XLSX.read(arrayBuffer, { type: 'array' })
     
-    // Get the first worksheet
     const sheetName = workbook.SheetNames[0]
     const worksheet = workbook.Sheets[sheetName]
     
-    // Convert to JSON with headers - use raw data to get all columns
-    // Use raw: true to preserve exact formatting, then format dates manually
     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '', raw: true }) as (string | number | boolean | null | undefined)[][]
     
-    // Find the actual header row (look for row with "Order No" or similar header patterns)
     let headerRowIndex = 0
     for (let i = 0; i < jsonData.length; i++) {
       const row = jsonData[i]
       if (row && row.length > 0) {
         const firstCell = String(row[0] || '').toLowerCase().trim()
-        // Look for common header patterns
         if (firstCell.includes('order') || firstCell.includes('id') || firstCell.includes('name') || 
             firstCell.includes('date') || firstCell.includes('price') || firstCell.includes('quantity')) {
           headerRowIndex = i
@@ -488,30 +451,25 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
       }
     }
     
-    // Get headers from the identified header row
     const headers = jsonData[headerRowIndex] as (string | number | boolean | null | undefined)[]
     const dataRows = jsonData.slice(headerRowIndex + 1) as (string | number | boolean | null | undefined)[][]
     
-    // Clean up headers - create safe XML tag names
     const cleanHeaders = headers.map((header, index) => {
       if (!header || header === '') {
         return `column_${index + 1}`
       }
-      // Convert to safe XML tag name
       return String(header)
         .trim()
-        .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove special chars except spaces and hyphens
-        .replace(/\s+/g, '_') // Replace spaces with underscores
-        .replace(/^[0-9]/, 'col_$&') // Prefix with 'col_' if starts with number
+        .replace(/[^a-zA-Z0-9\s-]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/^[0-9]/, 'col_$&')
         .toLowerCase()
     })
     
-    // Filter out completely empty rows from data
     const filteredDataRows = dataRows.filter(row => 
       row && row.some(cell => cell !== '' && cell !== null && cell !== undefined)
     )
     
-    // Generate XML - 1:1 conversion
     let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
 <excel-data>
   <metadata>
@@ -527,16 +485,13 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
   <data>
 `
     
-    // Convert each row to XML - exactly as it is in Excel
     filteredDataRows.forEach((row, rowIndex) => {
       xmlContent += `    <row index="${rowIndex + 1}">
 `
       cleanHeaders.forEach((header, colIndex) => {
         let cellValue = row[colIndex]
         
-        // Format dates to DD.MM.YYYY if it's a date column
         if (header.includes('date') && typeof cellValue === 'number' && cellValue > 40000) {
-          // Excel date serial number - convert to DD.MM.YYYY
           const date = new Date((cellValue - 25569) * 86400 * 1000)
           const day = String(date.getDate()).padStart(2, '0')
           const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -558,7 +513,6 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
     
     return xmlContent
   } catch (error) {
-    // Fallback XML if Excel processing fails
     return `<?xml version="1.0" encoding="UTF-8"?>
 <excel-data>
   <metadata>
@@ -575,9 +529,7 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
   }
 }
 
-// Helper function to escape XML special characters
 function escapeXml(text: string | number | boolean | null | undefined): string {
-  // Convert to string and handle null/undefined
   const str = String(text || '')
   return str
     .replace(/&/g, '&amp;')
@@ -587,9 +539,7 @@ function escapeXml(text: string | number | boolean | null | undefined): string {
     .replace(/'/g, '&#39;')
 }
 
-// Generate accurate Git-style diff using the diff library
 async function generateGitDiff(oldContent: string, newContent: string): Promise<string> {
-  // If it's a new file, show all lines as additions
   if (!oldContent) {
     const newLines = newContent.split('\n')
     let diffOutput = `diff --git a/nrt-ruleset.xml b/nrt-ruleset.xml
@@ -605,28 +555,24 @@ index 0000000..1234567
     return diffOutput
   }
   
-  // If it's the same content, no diff
   if (oldContent === newContent) {
     return 'No changes detected.'
   }
   
-  // Use the diff library to generate a proper unified diff
   const diffOutput = diff.createTwoFilesPatch(
-    'nrt-ruleset.xml',  // old file name
-    'nrt-ruleset.xml',  // new file name
-    oldContent,         // old content
-    newContent,         // new content
-    'Original',         // old header
-    'Modified'          // new header
+    'nrt-ruleset.xml',
+    'nrt-ruleset.xml',
+    oldContent,
+    newContent,
+    'Original',
+    'Modified'
   )
   
   return diffOutput
 }
 
-// Generate git diff --stat output
 function generateDiffStat(oldContent: string, newContent: string): string {
   if (!oldContent) {
-    // New file
     const newLines = newContent.split('\n').length
     return ` nrt-ruleset.xml | ${newLines} +\n 1 file changed, ${newLines} insertions(+)`
   }
@@ -635,7 +581,6 @@ function generateDiffStat(oldContent: string, newContent: string): string {
     return 'No changes detected.'
   }
   
-  // Use diff library to get the actual changes
   const changes = diff.diffLines(oldContent, newContent)
   
   let insertions = 0
@@ -655,7 +600,6 @@ function generateDiffStat(oldContent: string, newContent: string): string {
     return 'No changes detected.'
   }
   
-  // Format like git diff --stat
   let stat = ` nrt-ruleset.xml | ${totalChanges} ${totalChanges === 1 ? 'change' : 'changes'}`
   
   if (insertions > 0 && deletions > 0) {

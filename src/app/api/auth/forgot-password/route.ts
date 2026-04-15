@@ -21,7 +21,6 @@ export async function POST(req: NextRequest) {
     logWarn({ action: "PASSWORD_RESET_REQUEST_ERROR", error: String(err) });
   }
 
-  // Always return 200 — never reveal whether the account exists
   return NextResponse.json({
     message: "Falls ein Konto mit dieser Kennung existiert, wurde eine Reset-E-Mail versendet.",
   });

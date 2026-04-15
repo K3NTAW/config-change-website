@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Octokit } from '@octokit/rest'
 
-// Initialize GitHub API client
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
 })
@@ -17,7 +16,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Get repository URL based on environment
     let repoUrl
     switch (environment.toLowerCase()) {
       case 'production':
@@ -30,7 +28,6 @@ export async function POST(request: NextRequest) {
         repoUrl = process.env.XML_REPO_URL_DEFAULT || 'https://github.com/K3NTAW/xml-test-repo.git'
     }
 
-    // Parse repository URL to extract owner and name
     const urlMatch = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?$/)
     if (!urlMatch) {
       throw new Error('Invalid repository URL format')
@@ -38,12 +35,10 @@ export async function POST(request: NextRequest) {
     const repoOwner = urlMatch[1]
     const repoName = urlMatch[2]
 
-    // Generate XML content (same as in process route)
     const xmlContent = generateXMLFromExcel(release, environment, storyNumber)
     const xmlFileName = 'nrt-ruleset.xml'
 
     try {
-      // Try to get the current file content
       const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: repoOwner,
         repo: repoName,
@@ -51,11 +46,9 @@ export async function POST(request: NextRequest) {
       })
 
       if ('content' in currentFile && currentFile.content) {
-        // File exists, decode and compare
         const currentContent = Buffer.from(currentFile.content, 'base64').toString('utf-8')
         const newContent = xmlContent
 
-        // Generate diff
         const diff = generateDiff(currentContent, newContent)
         
         return NextResponse.json({
@@ -69,7 +62,6 @@ export async function POST(request: NextRequest) {
       }
     } catch (error: unknown) {
       if ((error as { status?: number }).status === 404) {
-        // File doesn't exist, this will be a new file
         return NextResponse.json({
           success: true,
           hasChanges: true,
@@ -91,7 +83,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Simplified XML generation (same as in process route)
 function generateXMLFromExcel(release: string, environment: string, storyNumber?: string): string {
   const timestamp = new Date().toISOString()
   
@@ -115,7 +106,6 @@ function generateXMLFromExcel(release: string, environment: string, storyNumber?
 </nrt-ruleset>`
 }
 
-// Simple diff generator
 function generateDiff(oldContent: string, newContent: string): string {
   const oldLines = oldContent.split('\n')
   const newLines = newContent.split('\n')

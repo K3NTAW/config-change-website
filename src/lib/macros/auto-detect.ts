@@ -1,7 +1,3 @@
-/**
- * Auto-detect and execute all applicable macros based on Excel file sheets
- */
-
 import * as XLSX from 'xlsx'
 import { listMacros, loadMacro } from './parser'
 import { executeMacro } from './executor'
@@ -13,27 +9,21 @@ export interface AutoDetectResult {
   skippedMacros: string[]
 }
 
-/**
- * Automatically detect and execute all applicable macros for an Excel file
- */
 export async function autoDetectAndExecuteMacros(
   file: File,
   release: string,
   environment: string,
   storyNumber?: string
 ): Promise<AutoDetectResult> {
-  // Read Excel file to get sheet names
   const arrayBuffer = await file.arrayBuffer()
   const workbook = XLSX.read(arrayBuffer, { type: 'array' })
   const sheetNames = workbook.SheetNames
 
-  // Load all available macros
   const macroNames = await listMacros()
   const allResults: MacroResult[] = []
   const executedMacros: string[] = []
   const skippedMacros: string[] = []
 
-  // Check each macro to see if its target sheet exists
   for (const macroName of macroNames) {
     const macro = await loadMacro(macroName)
     
@@ -44,13 +34,11 @@ export async function autoDetectAndExecuteMacros(
 
     const targetSheet = macro.config.xlSheet
 
-    // Check if the target sheet exists in the Excel file
     if (!sheetNames.includes(targetSheet)) {
       skippedMacros.push(`${macroName} (sheet "${targetSheet}" not found)`)
       continue
     }
 
-    // Convert parsed macro config to MacroConfig
     const config: MacroConfig = {
       xlSheet: macro.config.xlSheet || '',
       allXLFields: macro.config.allXLFields || '',
@@ -70,7 +58,6 @@ export async function autoDetectAndExecuteMacros(
       outLoop: macro.config.outLoop || false
     }
 
-    // Execute the macro
     try {
       const results = await executeMacro(file, config, release, environment, storyNumber)
       allResults.push(...results)
@@ -92,4 +79,3 @@ export async function autoDetectAndExecuteMacros(
     skippedMacros
   }
 }
-

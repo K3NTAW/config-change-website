@@ -11,7 +11,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/95 shadow-sm backdrop-blur">
       <div className="container flex h-16 items-center justify-between px-4 md:px-8">
-        {/* Logo and Navigation */}
+        {}
         <div className="flex items-center space-x-8">
           <Link href="/" className="group flex items-center space-x-2">
             <span className="text-xl font-semibold tracking-tighter text-[#001D70] transition-colors group-hover:text-[#0055FF]">
@@ -19,7 +19,7 @@ export function Header() {
             </span>
           </Link>
           
-          {/* Desktop Navigation */}
+          {}
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="/" className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]">
               Home
@@ -30,7 +30,7 @@ export function Header() {
           </nav>
         </div>
 
-        {/* Mobile Menu Button */}
+        {}
         <Button
           variant="ghost"
           size="sm"
@@ -41,7 +41,7 @@ export function Header() {
         </Button>
       </div>
 
-      {/* Mobile Navigation */}
+      {}
       {isMobileMenuOpen && (
         <div className="border-t border-slate-100 bg-white md:hidden">
           <nav className="container py-4 space-y-2">

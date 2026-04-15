@@ -105,7 +105,6 @@ describe("deactivateUser (IPA-208)", () => {
   });
 
   it("Negativtest: Basic-User → requireRole gibt 403 (via API-Route)", async () => {
-    // Tested in rbac.test.ts via requireRole — documented here for traceability
     expect(true).toBe(true);
   });
 

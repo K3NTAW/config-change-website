@@ -19,9 +19,6 @@ export class RegistrationError extends Error {
   }
 }
 
-/**
- * Legt einen Registrierungsantrag mit Status PENDING_APPROVAL an (IPA-202).
- */
 export async function createRegistrationRequest(raw: unknown) {
   const parsed = registerRequestSchema.safeParse(raw);
   if (!parsed.success) {

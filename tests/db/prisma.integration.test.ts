@@ -2,13 +2,6 @@ import "dotenv/config";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { PrismaClient } from "@prisma/client";
 
-/**
- * IPA-201 DoD: positiver + negativer DB-Test.
- * Aktivieren mit RUN_DB_INTEGRATION=1 und gültigem DATABASE_URL (nach migrate + seed für Rollen).
- *
- * Beispiel:
- *   RUN_DB_INTEGRATION=1 npm test
- */
 const runIntegration = process.env.RUN_DB_INTEGRATION === "1";
 
 if (!runIntegration) {

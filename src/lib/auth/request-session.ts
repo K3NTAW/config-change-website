@@ -6,13 +6,11 @@ import { hasRequiredRole } from "@/lib/auth/rbac";
 export async function getSessionFromRequest(
   req: NextRequest,
 ): Promise<SessionPayload | null> {
-  // Prefer httpOnly cookie (browser sessions); fall back to Bearer for API clients
   const cookieToken = req.cookies.get(SESSION_COOKIE_NAME)?.value;
   if (cookieToken) {
     try {
       return await verifySessionToken(cookieToken);
     } catch {
-      // invalid / expired cookie — fall through to Bearer check
     }
   }
 

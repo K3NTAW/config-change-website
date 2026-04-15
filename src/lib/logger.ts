@@ -1,7 +1,3 @@
-/**
- * Strukturierte Logs (JSON-Zeilen) für nachvollziehbare Fehleranalyse (u. a. HTTP-Status, Aktion).
- */
-
 export type LogLevel = "INFO" | "WARN" | "ERROR";
 
 function emit(level: LogLevel, payload: Record<string, unknown>) {

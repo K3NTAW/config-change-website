@@ -1,6 +1,3 @@
-// Simple file-based types for NRT Rules Automation
-
-// Teambox Assignment Types
 export interface TeamboxMapping {
   code: string
   teambox_name: string
@@ -16,7 +13,6 @@ export interface IntAssignMatrix {
   release: string
 }
 
-// XML Generation Types
 export interface XMLGenerationRequest {
   release: string
   environment: string
@@ -31,7 +27,6 @@ export interface XMLGenerationResult {
   error?: string
 }
 
-// File Management Types
 export interface FileInfo {
   name: string
   path: string
@@ -40,7 +35,6 @@ export interface FileInfo {
   modified_at: string
 }
 
-// Environment and Release Types
 export interface Environment {
   name: string
   description: string
@@ -54,7 +48,6 @@ export interface Release {
   is_active: boolean
 }
 
-// Simple Audit Log (stored in files)
 export interface AuditLog {
   timestamp: string
   action: string

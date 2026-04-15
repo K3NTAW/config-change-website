@@ -1,9 +1,5 @@
 import { logInfo } from "@/lib/logger";
 
-/**
- * Sends a password-reset link to the user.
- * Without SMTP config the payload is logged structurally (dev-mode).
- */
 export async function sendResetPasswordEmail(params: {
   to: string;
   username: string;

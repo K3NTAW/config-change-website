@@ -1,20 +1,10 @@
-/**
- * IPA-210: Audit für User Events (CREATE / APPROVE / REJECT).
- *
- * Verifies that all three onboarding events produce an audit record with the
- * correct category, action and payload. Each event has a positive test
- * (audit is written) and where applicable a negative test (no audit on error).
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { RegistrationStatus } from "@prisma/client";
 
-// ---- mock mail ----
 vi.mock("@/lib/mail/send-temp-password-email", () => ({
   sendTempPasswordEmail: vi.fn().mockResolvedValue(undefined),
 }));
 
-// ---- shared tx helper ----
 const makeTx = () => ({
   user: { create: vi.fn() },
   registrationRequest: { update: vi.fn() },
@@ -68,10 +58,6 @@ beforeEach(() => {
   );
 });
 
-// ---------------------------------------------------------------------------
-// Event 1: REGISTRATION_REQUESTED (User-Create)
-// ---------------------------------------------------------------------------
-
 describe("REGISTRATION_REQUESTED event (IPA-210)", () => {
   it("positiv: schreibt Audit-Event wenn Antrag erfolgreich angelegt wird", async () => {
     p.user.findFirst.mockResolvedValue(null);
@@ -109,10 +95,6 @@ describe("REGISTRATION_REQUESTED event (IPA-210)", () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Event 2: REGISTRATION_APPROVED (Admin-Approve)
-// ---------------------------------------------------------------------------
-
 describe("REGISTRATION_APPROVED event (IPA-210)", () => {
   it("positiv: schreibt Audit-Event mit approvedBy (adminUserId)", async () => {
     p.registrationRequest.findUnique.mockResolvedValue(pendingRow);
@@ -137,10 +119,6 @@ describe("REGISTRATION_APPROVED event (IPA-210)", () => {
     expect(tx.auditLog.create).not.toHaveBeenCalled();
   });
 });
-
-// ---------------------------------------------------------------------------
-// Event 3: REGISTRATION_REJECTED (Admin-Reject)
-// ---------------------------------------------------------------------------
 
 describe("REGISTRATION_REJECTED event (IPA-210)", () => {
   it("positiv: schreibt Audit-Event mit Begründung im payload", async () => {

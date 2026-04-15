@@ -1,10 +1,3 @@
-/**
- * IPA-211: Rule Change Tracking (JiraRef, Comment, Diff).
- *
- * Tests that logRuleChange writes a NRT_RULE_CHANGE audit record with all
- * required fields and that it delegates correctly to writeAudit.
- */
-
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { logRuleChange } from "@/lib/nrt/rule-change-service";
 

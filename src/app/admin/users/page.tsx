@@ -80,7 +80,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-[#001D70]">
@@ -102,7 +102,7 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      {/* Toast */}
+      {}
       {msg && (
         <div
           className={`rounded-lg px-4 py-3 text-sm ${
@@ -115,7 +115,7 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {/* Table */}
+      {}
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
@@ -186,7 +186,7 @@ export default function AdminUsersPage() {
                 </td>
                 <td className="px-5 py-3 text-right">
                   <div className="inline-flex gap-2">
-                    {/* Role dropdown */}
+                    {}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs">
@@ -207,7 +207,7 @@ export default function AdminUsersPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* Deactivate */}
+                    {}
                     <Button
                       variant="ghost"
                       size="sm"

@@ -6,11 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-/**
- * IPA-206: Forgot-password page — calls POST /api/auth/forgot-password.
- * Always shows a success message regardless of whether the account exists
- * (to prevent username enumeration).
- */
 export default function ForgotPasswordPage() {
   const [username, setUsername] = useState("");
   const [submitted, setSubmitted] = useState(false);

@@ -7,10 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-/**
- * IPA-205: Login page — calls POST /api/auth/login, sets session cookie,
- * then redirects to home (or /change-password if mustChangePassword is set).
- */
 export default function LoginPage() {
   const router = useRouter();
   const [username, setUsername] = useState("");

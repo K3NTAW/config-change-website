@@ -1,7 +1,3 @@
-/**
- * Macro executor - runs macro logic to generate XML from Excel files
- */
-
 import * as XLSX from 'xlsx'
 import type { MacroConfig, MacroResult } from './types'
 import {
@@ -17,9 +13,6 @@ import {
   initClearList
 } from './helpers'
 
-/**
- * Execute a macro to generate XML from Excel file
- */
 export async function executeMacro(
   file: File,
   config: MacroConfig,
@@ -28,24 +21,20 @@ export async function executeMacro(
   _storyNumber?: string
 ): Promise<MacroResult[]> {
   try {
-    // Read Excel file
     const arrayBuffer = await file.arrayBuffer()
     const workbook = XLSX.read(arrayBuffer, { type: 'array' })
     
-    // Get the worksheet
     const worksheet = workbook.Sheets[config.xlSheet]
     if (!worksheet) {
       throw new Error(`Worksheet "${config.xlSheet}" not found in Excel file`)
     }
     
-    // Initialize column mappings
     const { allFields, allXLFields, columnIndices } = initColumnMappings(
       config.allXLFields,
       config.allFields,
       worksheet
     )
     
-    // Get output field column indices
     const outFields = config.outFields.split(',').map(f => f.trim())
     const outColumnIndices: number[] = []
     for (const outField of outFields) {
@@ -57,11 +46,9 @@ export async function executeMacro(
       }
     }
     
-    // Read sequence from tab
     const inFieldsSeq = readSeqFromTab(workbook, config.inFieldsSeqTab)
     const inFieldsSeqArray = inFieldsSeq ? inFieldsSeq.split(';') : ['']
     
-    // Determine filter values based on release
     let filterValues = config.inXLFilterValuesNew
     if (release === '202109' || release.startsWith('R1.0')) {
       filterValues = config.inXLFilterValuesOld
@@ -70,14 +57,12 @@ export async function executeMacro(
     const filterValueArray = filterValues.split(',').map(v => v.trim())
     const results: MacroResult[] = []
     
-    // Process each filter value
     for (const filterValue of filterValueArray) {
       let filterName = ''
       let filter = ''
       
       if (filterValue === '%') {
         filterName = ''
-        // For %, create a NOT filter with all other values
         const otherValues = filterValues.split(',').filter(v => v.trim() !== '%').join(',')
         filter = '!' + otherValues
       } else {
@@ -85,7 +70,6 @@ export async function executeMacro(
         filter = '=' + filterValue
       }
       
-      // Create XML
       const dvmName = config.outDVM.replace('%', filterName)
       let xml = XMLcreate(dvmName, config.outBC)
       
@@ -95,7 +79,6 @@ export async function executeMacro(
         loopSuffix = ',Loop'
       }
       
-      // Process each sequence
       for (let seqIndex = 0; seqIndex < inFieldsSeqArray.length; seqIndex++) {
         const currentSeq = inFieldsSeqArray[seqIndex]
         
@@ -105,7 +88,6 @@ export async function executeMacro(
         
         initClearList(textArray, inListArray, outListArray)
         
-        // Get filtered fields
         let row = 1
         let hasMore = true
         
@@ -134,7 +116,6 @@ export async function executeMacro(
           }
         }
         
-        // Add list to XML
         xml += XMLAddList(
           config.outBC,
           config.outReturnCode,
@@ -146,7 +127,6 @@ export async function executeMacro(
         )
       }
       
-      // Check and add empty list if needed
       xml += XMLCheckAddEmpty(
         config.outBC,
         config.outReturnCode,
@@ -154,11 +134,9 @@ export async function executeMacro(
         inFieldsSeqArray.length + 1
       )
       
-      // Close XML
       const inFieldsWithLoop = config.inFields + loopSuffix
       xml += XMLclose(inFieldsWithLoop)
       
-      // Generate file name
       const fileName = config.outFile.replace('%', filterName) + '.xml'
       
       results.push({
@@ -178,4 +156,3 @@ export async function executeMacro(
     }]
   }
 }
-

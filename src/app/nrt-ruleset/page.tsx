@@ -34,7 +34,6 @@ export default function NRTRulesetPage() {
     gitPush?: string
   } | null>(null)
 
-
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file && file.name.endsWith('.xlsx')) {
@@ -143,7 +142,7 @@ export default function NRTRulesetPage() {
             </div>
 
             <div className="grid gap-6">
-              {/* Upload Section */}
+              {}
               <Card className="rounded-2xl border-slate-100 bg-white shadow-[0_2px_20px_rgba(0,0,0,0.03)]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-[#001D70]">
@@ -173,7 +172,7 @@ export default function NRTRulesetPage() {
                 </CardContent>
               </Card>
 
-              {/* Configuration Section */}
+              {}
               <Card className="rounded-2xl border-slate-100 bg-white shadow-[0_2px_20px_rgba(0,0,0,0.03)]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-[#001D70]">
@@ -232,7 +231,7 @@ export default function NRTRulesetPage() {
                 </CardContent>
               </Card>
 
-              {/* Action Buttons */}
+              {}
               <div className="flex justify-center gap-4">
                 <Button
                   onClick={handlePreview}
@@ -254,7 +253,7 @@ export default function NRTRulesetPage() {
                 </Button>
               </div>
 
-              {/* Diff Preview Section */}
+              {}
               {showDiff && diffData && (
                 <Card className="mt-2 rounded-2xl border-slate-100 bg-white shadow-[0_2px_20px_rgba(0,0,0,0.03)]">
                   <CardHeader>
@@ -331,7 +330,7 @@ export default function NRTRulesetPage() {
                 </Card>
               )}
 
-              {/* Result Section */}
+              {}
               {result && (
                 <Card className="rounded-2xl border-slate-100 bg-white shadow-[0_2px_20px_rgba(0,0,0,0.03)]">
                   <CardHeader>

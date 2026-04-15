@@ -58,7 +58,6 @@ describe("getSessionFromRequest (IPA-205)", () => {
   });
 
   it("Negativtest: falsches Passwort → 401 (Login-Route Logik)", async () => {
-    // Verify that a tampered token (wrong signature) is rejected
     const token = await signSessionToken({ sub: "u5", username: "TAA0005", role: "BASIC" });
     const tampered = token.slice(0, -4) + "XXXX";
     const req = new NextRequest("http://localhost/api/some-route", {

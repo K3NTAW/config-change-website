@@ -5,7 +5,7 @@ import { sendResetPasswordEmail } from "@/lib/mail/send-reset-password-email";
 import { logInfo, logWarn } from "@/lib/logger";
 
 const ROUNDS = 12;
-const TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+const TOKEN_TTL_MS = 60 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 8;
 
 export function generateRawToken(): string {
@@ -25,10 +25,6 @@ function isStrongPassword(password: string): boolean {
   );
 }
 
-/**
- * Initiates a password reset for a user identified by username or email.
- * Always resolves without error to avoid leaking whether the account exists.
- */
 export async function requestPasswordReset(usernameOrEmail: string): Promise<void> {
   const value = usernameOrEmail.trim().toLowerCase();
 
@@ -41,7 +37,6 @@ export async function requestPasswordReset(usernameOrEmail: string): Promise<voi
     return;
   }
 
-  // Invalidate any existing unused tokens for this user
   await prisma.passwordResetToken.deleteMany({
     where: { userId: user.id, usedAt: null },
   });
@@ -63,9 +58,6 @@ export type ResetPasswordResult =
   | { ok: true }
   | { error: "INVALID" | "EXPIRED" | "USED" | "WEAK_PASSWORD" };
 
-/**
- * Validates the reset token and sets a new password.
- */
 export async function resetPassword(
   rawToken: string,
   newPassword: string,

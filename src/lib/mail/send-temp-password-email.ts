@@ -1,10 +1,5 @@
 import { logInfo } from "@/lib/logger";
 
-/**
- * Benachrichtigung mit temporärem Passwort nach Admin-Freigabe.
- * Ohne SMTP-Konfiguration wird der Inhalt **strukturiert geloggt** (lokal/dev nachvollziehbar);
- * mit gesetztem SMTP werden echte Mails versendet.
- */
 export async function sendTempPasswordEmail(params: {
   to: string;
   username: string;

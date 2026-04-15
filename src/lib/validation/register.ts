@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-/**
- * IPA-202: TAA-Kennung (wie Demo-Seeds TAA0001) und nur Swisscom-E-Mail.
- */
 export const registerRequestSchema = z.object({
   username: z
     .string()

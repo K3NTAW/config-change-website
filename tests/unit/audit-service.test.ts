@@ -1,20 +1,6 @@
-/**
- * IPA-209: Audit Core Service tests.
- *
- * Covers:
- *  - writeAudit calls auditLog.create with all required fields
- *  - writeAudit accepts a transaction client (atomic writes)
- *  - Immutability: the audit-service module exports no delete or update path
- *  - No call to auditLog.update or auditLog.delete is ever made
- */
-
 import { describe, it, expect, vi } from "vitest";
 import * as auditServiceModule from "@/lib/audit/audit-service";
 import { writeAudit } from "@/lib/audit/audit-service";
-
-// --------------------------------------------------------------------------
-// Structural immutability test
-// --------------------------------------------------------------------------
 
 describe("audit-service module exports (IPA-209 immutability)", () => {
   it("does not export a deleteAudit function", () => {
@@ -30,10 +16,6 @@ describe("audit-service module exports (IPA-209 immutability)", () => {
     expect(exported).toEqual(["writeAudit"]);
   });
 });
-
-// --------------------------------------------------------------------------
-// writeAudit behaviour tests
-// --------------------------------------------------------------------------
 
 describe("writeAudit (IPA-209)", () => {
   const makeClient = () => ({

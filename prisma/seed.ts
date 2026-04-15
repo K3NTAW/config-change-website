@@ -5,7 +5,6 @@ import { PrismaClient, AuditCategory } from "@prisma/client";
 const prisma = new PrismaClient();
 const ROUNDS = 12;
 
-/** Demo-Passwörter nur für lokale Entwicklung (Login / Admin-UI testen). */
 const DEMO_ADMIN_PW = "DevAdmin123!!";
 const DEMO_BASIC_PW = "DevBasic123!!";
 

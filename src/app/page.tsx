@@ -16,7 +16,7 @@ export default function HomePage() {
   return (
     <Layout>
       <div className="bg-[#F8F9FA] text-slate-800">
-        {/* Hero Section */}
+        {}
         <section className="container relative overflow-hidden px-4 py-24 md:px-8 md:py-32">
           <div className="pointer-events-none absolute -right-20 -top-20 h-96 w-96 rounded-full bg-[#0055FF]/5 blur-3xl" />
           <div className="relative z-10 mx-auto max-w-4xl text-center">
@@ -39,7 +39,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Features Section */}
+        {}
         <section className="container rounded-t-[3rem] bg-white px-4 py-24 shadow-[0_-10px_40px_rgba(0,0,0,0.02)] md:px-8">
           <div className="mx-auto mb-16 max-w-2xl text-center">
             <h2 className="text-3xl font-semibold tracking-tight text-[#001D70] sm:text-4xl">
@@ -100,7 +100,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Workflow Section */}
+        {}
         <section className="container px-4 py-24 md:px-8">
           <div className="mx-auto max-w-5xl">
             <div className="relative overflow-hidden rounded-3xl bg-[#001D70] p-8 sm:p-12">
@@ -157,7 +157,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Status Section */}
+        {}
         <section className="container mb-24 px-4 py-12 md:px-8">
           <div className="mx-auto max-w-5xl">
             <div className="rounded-2xl border border-slate-100 bg-white p-8 shadow-[0_2px_20px_rgba(0,0,0,0.03)] sm:p-10">

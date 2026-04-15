@@ -7,10 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-/**
- * IPA-206: Reset-password page — reads ?token= from the URL (sent via email),
- * calls POST /api/auth/reset-password, then redirects to /login on success.
- */
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();

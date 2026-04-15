@@ -6,10 +6,6 @@ import { RefreshCw } from "lucide-react";
 
 type Pending = { id: string; username: string; email: string; createdAt: string };
 
-/**
- * Admin-Oberfläche: ausstehende Registrierungsanträge freigeben oder ablehnen (IPA-203).
- * Auth läuft über httpOnly Session-Cookie (IPA-205) — kein manuelles Token-Handling nötig.
- */
 export default function AdminRegistrationsPage() {
   const [pending, setPending] = useState<Pending[]>([]);
   const [loading, setLoading] = useState(true);

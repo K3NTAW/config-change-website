@@ -1,7 +1,6 @@
 import fs from 'fs/promises'
 import path from 'path'
 
-// Simple file-based storage utilities
 export class FileStorage {
   private basePath: string
 
@@ -9,7 +8,6 @@ export class FileStorage {
     this.basePath = basePath
   }
 
-  // Ensure directory exists
   async ensureDir(dirPath: string): Promise<void> {
     const fullPath = path.join(this.basePath, dirPath)
     try {
@@ -19,7 +17,6 @@ export class FileStorage {
     }
   }
 
-  // Read JSON file
   async readJson<T>(filePath: string): Promise<T | null> {
     try {
       const fullPath = path.join(this.basePath, filePath)
@@ -30,14 +27,12 @@ export class FileStorage {
     }
   }
 
-  // Write JSON file
   async writeJson<T>(filePath: string, data: T): Promise<void> {
     const fullPath = path.join(this.basePath, filePath)
     await this.ensureDir(path.dirname(filePath))
     await fs.writeFile(fullPath, JSON.stringify(data, null, 2))
   }
 
-  // List files in directory
   async listFiles(dirPath: string): Promise<string[]> {
     try {
       const fullPath = path.join(this.basePath, dirPath)
@@ -48,7 +43,6 @@ export class FileStorage {
     }
   }
 
-  // Get file info
   async getFileInfo(filePath: string) {
     try {
       const fullPath = path.join(this.basePath, filePath)
@@ -65,7 +59,6 @@ export class FileStorage {
     }
   }
 
-  // Delete file
   async deleteFile(filePath: string): Promise<boolean> {
     try {
       const fullPath = path.join(this.basePath, filePath)
@@ -77,5 +70,4 @@ export class FileStorage {
   }
 }
 
-// Create default file storage instance
 export const fileStorage = new FileStorage()

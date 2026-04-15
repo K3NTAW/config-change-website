@@ -1,12 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Menu, X } from 'lucide-react'
+import { ROLES } from '@/lib/auth/rbac'
+
+type SessionInfo = { authenticated: true; role: string } | { authenticated: false }
 
 export function Header() {
+  const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [session, setSession] = useState<SessionInfo | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/auth/session')
+      .then((res) => res.json() as Promise<{ authenticated?: boolean; role?: string }>)
+      .then((data) => {
+        if (cancelled) return
+        if (data.authenticated && typeof data.role === 'string') {
+          setSession({ authenticated: true, role: data.role })
+        } else {
+          setSession({ authenticated: false })
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSession({ authenticated: false })
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [pathname])
+
+  const isAdmin = session?.authenticated === true && session.role === ROLES.ADMIN
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/95 shadow-sm backdrop-blur">
@@ -27,6 +55,22 @@ export function Header() {
             <Link href="/nrt-ruleset" className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]">
               NRT Ruleset
             </Link>
+            {isAdmin && (
+              <>
+                <Link
+                  href="/admin/users"
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                >
+                  Benutzer
+                </Link>
+                <Link
+                  href="/admin/registrations"
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                >
+                  Registrierungen
+                </Link>
+              </>
+            )}
           </nav>
         </div>
 
@@ -59,6 +103,24 @@ export function Header() {
             >
               NRT Ruleset
             </Link>
+            {isAdmin && (
+              <>
+                <Link
+                  href="/admin/users"
+                  className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Benutzer
+                </Link>
+                <Link
+                  href="/admin/registrations"
+                  className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Registrierungen
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}

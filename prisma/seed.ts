@@ -1,8 +1,9 @@
 import "dotenv/config";
 import { hash } from "bcryptjs";
-import { PrismaClient, AuditCategory } from "@prisma/client";
+import { AuditCategory } from "@prisma/client";
+import { createPrismaClient } from "../src/lib/db/prisma";
 
-const prisma = new PrismaClient();
+const prisma = createPrismaClient();
 const ROUNDS = 12;
 
 const DEMO_ADMIN_PW = "DevAdmin123!!";

@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { PrismaClient } from "@prisma/client";
+import { createPrismaClient } from "@/lib/db/prisma";
 
 const runIntegration = process.env.RUN_DB_INTEGRATION === "1";
 
@@ -10,7 +10,7 @@ if (!runIntegration) {
   });
 } else {
   describe("Prisma / IPA-201 schema", () => {
-    const prisma = new PrismaClient();
+    const prisma = createPrismaClient();
 
     beforeAll(async () => {
       await prisma.$connect();

@@ -58,6 +58,18 @@ export function Header() {
             {isAdmin && (
               <>
                 <Link
+                  href="/admin"
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                >
+                  Übersicht
+                </Link>
+                <Link
+                  href="/admin/audit"
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                >
+                  Protokoll
+                </Link>
+                <Link
                   href="/admin/users"
                   className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
                 >
@@ -68,6 +80,12 @@ export function Header() {
                   className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
                 >
                   Registrierungen
+                </Link>
+                <Link
+                  href="/admin/rule-changes"
+                  className="text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                >
+                  Regeländerungen
                 </Link>
               </>
             )}
@@ -106,6 +124,20 @@ export function Header() {
             {isAdmin && (
               <>
                 <Link
+                  href="/admin"
+                  className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Übersicht
+                </Link>
+                <Link
+                  href="/admin/audit"
+                  className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Protokoll
+                </Link>
+                <Link
                   href="/admin/users"
                   className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -118,6 +150,13 @@ export function Header() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Registrierungen
+                </Link>
+                <Link
+                  href="/admin/rule-changes"
+                  className="block px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:text-[#0055FF]"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Regeländerungen
                 </Link>
               </>
             )}

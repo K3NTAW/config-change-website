@@ -4,8 +4,9 @@ import * as XLSX from 'xlsx'
 import * as diff from 'diff'
 import { listMacros, autoDetectAndExecuteMacros } from '@/lib/macros'
 import { prisma } from '@/lib/db/prisma'
-import { logRuleChange } from '@/lib/nrt/rule-change-service'
+import { logRuleChange, normalizeJiraRef } from '@/lib/nrt/rule-change-service'
 import { getSessionFromRequest } from '@/lib/auth/request-session'
+import { logException } from '@/lib/logger'
 
 const getOctokit = () => {
   const token = process.env.GITHUB_TOKEN
@@ -25,17 +26,26 @@ export async function GET() {
       macros
     })
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Error listing macros: ' + (error as Error).message
-    }, { status: 500 })
+    logException(error, {
+      route: '/api/nrt-ruleset/process',
+      method: 'GET',
+      phase: 'listMacros',
+    })
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'Makros konnten nicht geladen werden. Bitte versuchen Sie es später erneut.',
+      },
+      { status: 500 },
+    )
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const contentType = request.headers.get('content-type')
-    let action, release, environment, storyNumber, acknowledge, file, macroName
+    let action, release, environment, storyNumber, acknowledge, file, macroName, comment: string | undefined
 
           if (contentType?.includes('multipart/form-data')) {
             const formData = await request.formData()
@@ -46,14 +56,16 @@ export async function POST(request: NextRequest) {
             acknowledge = formData.get('acknowledge') === 'true'
             file = formData.get('file') as File
             macroName = formData.get('macroName') as string
+            comment = (formData.get('comment') as string) || undefined
           } else {
-            const body = await request.json()
-            action = body.action
-            release = body.release
-            environment = body.environment
-            storyNumber = body.storyNumber
-            acknowledge = body.acknowledge
-            macroName = body.macroName
+            const body = await request.json() as Record<string, unknown>
+            action = body.action as string
+            release = body.release as string
+            environment = body.environment as string
+            storyNumber = body.storyNumber as string
+            acknowledge = body.acknowledge as boolean
+            macroName = body.macroName as string
+            comment = typeof body.comment === 'string' ? body.comment : undefined
           }
 
     if (!release || !environment) {
@@ -68,7 +80,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'push' && acknowledge) {
-      return handlePush(request, release, environment, storyNumber, file, macroName)
+      return handlePush(request, release, environment, storyNumber, file, macroName, comment)
     }
 
     return NextResponse.json({
@@ -77,10 +89,19 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Error processing NRT Ruleset: ' + (error as Error).message
-    }, { status: 500 })
+    logException(error, {
+      route: '/api/nrt-ruleset/process',
+      method: 'POST',
+      phase: 'POST',
+    })
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'Die NRT-Ruleset-Anfrage konnte nicht verarbeitet werden. Bitte versuchen Sie es später erneut.',
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -164,7 +185,19 @@ async function handlePreview(release: string, environment: string, storyNumber?:
           })
         }
         if ((error as { status?: number }).status === 401) {
-          throw new Error('GitHub authentication failed. Please check that GITHUB_TOKEN is set correctly in Vercel environment variables and has the required permissions (repo scope).')
+          logException(error, {
+            route: '/api/nrt-ruleset/process',
+            method: 'POST',
+            phase: 'handlePreview-github',
+          })
+          return NextResponse.json(
+            {
+              success: false,
+              message:
+                'Die Vorschau konnte nicht geladen werden (GitHub-Zugriff). Bitte Konfiguration prüfen.',
+            },
+            { status: 502 },
+          )
         }
         throw error
       }
@@ -172,13 +205,23 @@ async function handlePreview(release: string, environment: string, storyNumber?:
 
     const firstSuccessResult = autoDetectResult.allResults.find(r => r.success)
     if (!firstSuccessResult) {
-      return NextResponse.json({
-        success: false,
-        message: 'All macros failed to execute',
-        errors: autoDetectResult.allResults.map(r => r.error).filter(Boolean),
-        executedMacros: autoDetectResult.executedMacros,
-        skippedMacros: autoDetectResult.skippedMacros
-      }, { status: 500 })
+      logException(
+        new Error('all_macros_failed'),
+        {
+          route: '/api/nrt-ruleset/process',
+          method: 'POST',
+          phase: 'handlePreview-macros',
+          macroErrors: autoDetectResult.allResults.map((r) => r.error).filter(Boolean),
+        },
+      )
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            'Die Makros konnten nicht ausgeführt werden. Bitte Datei und Eingaben prüfen.',
+        },
+        { status: 500 },
+      )
     }
 
     const xmlContent = firstSuccessResult.xmlContent
@@ -251,32 +294,67 @@ async function handlePreview(release: string, environment: string, storyNumber?:
         })
       }
       if ((error as { status?: number }).status === 401) {
-        throw new Error('GitHub authentication failed. Please check that GITHUB_TOKEN is set correctly in Vercel environment variables and has the required permissions (repo scope).')
+        logException(error, {
+          route: '/api/nrt-ruleset/process',
+          method: 'POST',
+          phase: 'handlePreview-github-macro',
+        })
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              'Die Vorschau konnte nicht geladen werden (GitHub-Zugriff). Bitte Konfiguration prüfen.',
+          },
+          { status: 502 },
+        )
       }
       throw error
     }
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    let status = 500
-    let message = `Error generating preview: ${errorMessage}`
-    
-    if (errorMessage.includes('GITHUB_TOKEN')) {
-      message = errorMessage
-      status = 500
-    } else if (errorMessage.includes('authentication failed')) {
-      message = errorMessage
-      status = 401
-    }
-    
-    return NextResponse.json({
-      success: false,
-      message
-    }, { status })
+    logException(error, {
+      route: '/api/nrt-ruleset/process',
+      method: 'POST',
+      phase: 'handlePreview',
+    })
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'Die Vorschau konnte nicht erzeugt werden. Bitte versuchen Sie es erneut.',
+      },
+      { status: 500 },
+    )
   }
 }
 
-async function handlePush(request: NextRequest, release: string, environment: string, storyNumber?: string, file?: File, _macroName?: string) {
+async function fetchRepoFileText(
+  octokit: InstanceType<typeof Octokit>,
+  owner: string,
+  repo: string,
+  path: string,
+): Promise<string> {
+  try {
+    const { data } = await octokit.rest.repos.getContent({ owner, repo, path })
+    if (data && typeof data === 'object' && !Array.isArray(data) && 'content' in data && data.content) {
+      return Buffer.from(data.content as string, 'base64').toString('utf-8')
+    }
+  } catch (e: unknown) {
+    if ((e as { status?: number }).status === 404) return ''
+    throw e
+  }
+  return ''
+}
+
+async function handlePush(
+  request: NextRequest,
+  release: string,
+  environment: string,
+  storyNumber?: string,
+  file?: File,
+  _macroName?: string,
+  comment?: string,
+) {
   try {
     if (!file) {
       return NextResponse.json({
@@ -334,6 +412,8 @@ async function handlePush(request: NextRequest, release: string, environment: st
     let gitPush = null
     try {
       const octokit = getOctokit()
+      const previousContent = await fetchRepoFileText(octokit, repoOwner, repoName, xmlFileName)
+
       const { data: refData } = await octokit.rest.git.getRef({
         owner: repoOwner,
         repo: repoName,
@@ -367,10 +447,11 @@ async function handlePush(request: NextRequest, release: string, environment: st
         ]
       })
       
+      const jiraLabel = normalizeJiraRef(storyNumber)
       const { data: newCommit } = await octokit.rest.git.createCommit({
         owner: repoOwner,
         repo: repoName,
-        message: `NRT-${storyNumber || 'AUTO'}: Generated NRT Ruleset XML for ${release}/${environment} at ${new Date().toISOString()}`,
+        message: `${jiraLabel}: Generated NRT Ruleset XML for ${release}/${environment} at ${new Date().toISOString()}`,
         tree: treeData.sha,
         parents: [refData.object.sha]
       })
@@ -386,24 +467,46 @@ async function handlePush(request: NextRequest, release: string, environment: st
       gitPush = 'Pushed to remote repository successfully'
 
       const session = await getSessionFromRequest(request)
-      const pushDiff = await generateGitDiff('', xmlContent)
-      await logRuleChange(prisma, {
-        jiraRef: storyNumber ? `NRT-${storyNumber}` : 'NRT-AUTO',
-        diff: pushDiff,
-        fileName: xmlFileName,
-        release,
-        environment,
-        commitSha: newCommit.sha,
-        userId: session?.sub ?? null,
-        ipAddress: request.headers.get('x-forwarded-for') ?? request.headers.get('x-real-ip') ?? null,
-      })
+      const pushDiff = await generateGitDiff(previousContent, xmlContent)
+      const diffStatStr = generateDiffStat(previousContent, xmlContent)
+      try {
+        await logRuleChange(prisma, {
+          jiraRef: jiraLabel,
+          comment: comment?.trim() || null,
+          diff: pushDiff,
+          diffStat: diffStatStr,
+          fileName: xmlFileName,
+          release,
+          environment,
+          commitSha: newCommit.sha,
+          userId: session?.sub ?? null,
+          ipAddress:
+            request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+            request.headers.get('x-real-ip') ??
+            null,
+          userAgent: request.headers.get('user-agent') ?? null,
+        })
+      } catch (auditErr) {
+        logException(auditErr, {
+          route: '/api/nrt-ruleset/process',
+          method: 'POST',
+          phase: 'rule-change-audit',
+        })
+        gitPush = `${gitPush} Hinweis: Audit-Eintrag konnte nicht gespeichert werden.`
+      }
 
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
-      if (errorMessage.includes('Bad credentials') || (error as { status?: number }).status === 401) {
-        gitPush = 'Push failed: GitHub authentication error. Please check GITHUB_TOKEN in Vercel environment variables.'
+      logException(error, {
+        route: '/api/nrt-ruleset/process',
+        method: 'POST',
+        phase: 'handlePush-github',
+      })
+      const status = (error as { status?: number }).status
+      if (status === 401 || status === 403) {
+        gitPush =
+          'Push fehlgeschlagen: GitHub-Authentifizierung. Konfiguration prüfen (siehe Server-Logs).'
       } else {
-        gitPush = `Push failed: ${errorMessage}`
+        gitPush = 'Push fehlgeschlagen. Details siehe Server-Logs.'
       }
     }
 
@@ -417,10 +520,19 @@ async function handlePush(request: NextRequest, release: string, environment: st
     })
 
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Error pushing changes: ' + (error as Error).message
-    }, { status: 500 })
+    logException(error, {
+      route: '/api/nrt-ruleset/process',
+      method: 'POST',
+      phase: 'handlePush',
+    })
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          'Der Push konnte nicht abgeschlossen werden. Bitte versuchen Sie es später erneut.',
+      },
+      { status: 500 },
+    )
   }
 }
 
@@ -513,6 +625,11 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
     
     return xmlContent
   } catch (error) {
+    logException(error, {
+      route: '/api/nrt-ruleset/process',
+      method: 'POST',
+      phase: 'generateXMLFromExcel',
+    })
     return `<?xml version="1.0" encoding="UTF-8"?>
 <excel-data>
   <metadata>
@@ -520,10 +637,10 @@ async function generateXMLFromExcel(file: File | undefined, release: string, env
     <release>${release}</release>
     <environment>${environment}</environment>
     <story-number>${storyNumber || 'N/A'}</story-number>
-    <error>Failed to process Excel file: ${(error as Error).message}</error>
+    <error>Excel-Datei konnte nicht verarbeitet werden.</error>
   </metadata>
   <data>
-    <error>Processing failed</error>
+    <error>Verarbeitung fehlgeschlagen</error>
   </data>
 </excel-data>`
   }

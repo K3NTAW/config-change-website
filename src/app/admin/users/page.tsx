@@ -80,13 +80,15 @@ export default function AdminUsersPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-      {}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#001D70]">
+          <h1
+            id="admin-users-title"
+            className="text-2xl font-semibold tracking-tight text-[#001D70]"
+          >
             Benutzerverwaltung
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-slate-600">
             Rollen zuweisen, Benutzer deaktivieren — nur für Administratoren.
           </p>
         </div>
@@ -102,9 +104,10 @@ export default function AdminUsersPage() {
         </Button>
       </div>
 
-      {}
       {msg && (
         <div
+          role="alert"
+          aria-live="polite"
           className={`rounded-lg px-4 py-3 text-sm ${
             msg.ok
               ? "bg-green-50 text-green-800 border border-green-200"
@@ -115,29 +118,45 @@ export default function AdminUsersPage() {
         </div>
       )}
 
-      {}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div
+        className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        role="region"
+        aria-labelledby="admin-users-title"
+      >
         <table className="w-full text-sm">
+          <caption className="sr-only">
+            Benutzerliste mit Kennung, E-Mail, Rolle und Status
+          </caption>
           <thead>
-            <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-              <th className="px-5 py-3">Benutzer</th>
-              <th className="px-5 py-3">E-Mail</th>
-              <th className="px-5 py-3">Rolle</th>
-              <th className="px-5 py-3">Status</th>
-              <th className="px-5 py-3 text-right">Aktionen</th>
+            <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <th scope="col" className="px-5 py-3">
+                Benutzer
+              </th>
+              <th scope="col" className="px-5 py-3">
+                E-Mail
+              </th>
+              <th scope="col" className="px-5 py-3">
+                Rolle
+              </th>
+              <th scope="col" className="px-5 py-3">
+                Status
+              </th>
+              <th scope="col" className="px-5 py-3 text-right">
+                Aktionen
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading && (
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                <td colSpan={5} className="px-5 py-8 text-center text-slate-600">
                   Wird geladen…
                 </td>
               </tr>
             )}
             {!loading && users.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-5 py-8 text-center text-slate-400">
+                <td colSpan={5} className="px-5 py-8 text-center text-slate-600">
                   Keine Benutzer gefunden.
                 </td>
               </tr>
@@ -155,7 +174,7 @@ export default function AdminUsersPage() {
                     )}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-slate-500">{u.email ?? "—"}</td>
+                <td className="px-5 py-3 text-slate-600">{u.email ?? "—"}</td>
                 <td className="px-5 py-3">
                   <span
                     className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -189,8 +208,13 @@ export default function AdminUsersPage() {
                     {}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm" className="h-7 gap-1 px-2 text-xs">
-                          Rolle <ChevronDown className="h-3 w-3" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-xs"
+                          aria-label={`Rolle für Benutzer ${u.username} ändern`}
+                        >
+                          Rolle <ChevronDown className="h-3 w-3" aria-hidden />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -214,8 +238,9 @@ export default function AdminUsersPage() {
                       disabled={!u.isActive}
                       onClick={() => void deactivate(u.id, u.username)}
                       className="h-7 gap-1 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 disabled:text-slate-300"
+                      aria-label={`Benutzer ${u.username} deaktivieren`}
                     >
-                      <UserX className="h-3.5 w-3.5" />
+                      <UserX className="h-3.5 w-3.5" aria-hidden />
                       Deaktivieren
                     </Button>
                   </div>
@@ -226,7 +251,7 @@ export default function AdminUsersPage() {
         </table>
       </div>
 
-      <p className="text-xs text-slate-400">
+      <p className="text-xs text-slate-600">
         Alle Änderungen werden im Audit-Log festgehalten. Deaktivierte Benutzer können sich nicht mehr anmelden.
       </p>
     </div>

@@ -1,97 +1,149 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { Octokit } from '@octokit/rest'
+import { NextRequest, NextResponse } from "next/server";
+import { Octokit } from "@octokit/rest";
+import { logException } from "@/lib/logger";
+import { runApi } from "@/lib/api/run-api";
 
 const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
-})
+});
 
 export async function POST(request: NextRequest) {
-  try {
-    const { release, environment, storyNumber } = await request.json()
+  return runApi(request, "POST", "/api/nrt-ruleset/diff", async () => {
+    let body: { release?: string; environment?: string; storyNumber?: string };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "Invalid JSON body." },
+        { status: 400 },
+      );
+    }
+
+    const { release, environment, storyNumber } = body;
 
     if (!release || !environment) {
-      return NextResponse.json({
-        success: false,
-        message: 'Missing required fields: release, environment'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Missing required fields: release, environment",
+        },
+        { status: 400 },
+      );
     }
 
-    let repoUrl
+    let repoUrl;
     switch (environment.toLowerCase()) {
-      case 'production':
-        repoUrl = process.env.XML_REPO_URL_PROD || 'https://github.com/K3NTAW/xml-prod.git'
-        break
-      case 'development':
-        repoUrl = process.env.XML_REPO_URL_DEV || 'https://github.com/K3NTAW/xml-dev.git'
-        break
+      case "production":
+        repoUrl =
+          process.env.XML_REPO_URL_PROD ||
+          "https://github.com/K3NTAW/xml-prod.git";
+        break;
+      case "development":
+        repoUrl =
+          process.env.XML_REPO_URL_DEV ||
+          "https://github.com/K3NTAW/xml-dev.git";
+        break;
       default:
-        repoUrl = process.env.XML_REPO_URL_DEFAULT || 'https://github.com/K3NTAW/xml-test-repo.git'
+        repoUrl =
+          process.env.XML_REPO_URL_DEFAULT ||
+          "https://github.com/K3NTAW/xml-test-repo.git";
     }
 
-    const urlMatch = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+?)(?:\.git)?$/)
+    const urlMatch = repoUrl.match(
+      /github\.com\/([^/]+)\/([^/]+?)(?:\.git)?$/,
+    );
     if (!urlMatch) {
-      throw new Error('Invalid repository URL format')
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid repository configuration.",
+        },
+        { status: 500 },
+      );
     }
-    const repoOwner = urlMatch[1]
-    const repoName = urlMatch[2]
+    const repoOwner = urlMatch[1];
+    const repoName = urlMatch[2];
 
-    const xmlContent = generateXMLFromExcel(release, environment, storyNumber)
-    const xmlFileName = 'nrt-ruleset.xml'
+    const xmlContent = generateXMLFromExcel(release, environment, storyNumber);
+    const xmlFileName = "nrt-ruleset.xml";
 
     try {
       const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: repoOwner,
         repo: repoName,
-        path: xmlFileName
-      })
+        path: xmlFileName,
+      });
 
-      if ('content' in currentFile && currentFile.content) {
-        const currentContent = Buffer.from(currentFile.content, 'base64').toString('utf-8')
-        const newContent = xmlContent
+      if ("content" in currentFile && currentFile.content) {
+        const currentContent = Buffer.from(
+          currentFile.content,
+          "base64",
+        ).toString("utf-8");
+        const newContent = xmlContent;
 
-        const diff = generateDiff(currentContent, newContent)
-        
+        const diff = generateDiff(currentContent, newContent);
+
         return NextResponse.json({
           success: true,
           hasChanges: currentContent !== newContent,
           diff: diff,
           currentContent: currentContent,
           newContent: newContent,
-          fileName: xmlFileName
-        })
+          fileName: xmlFileName,
+        });
       }
     } catch (error: unknown) {
       if ((error as { status?: number }).status === 404) {
         return NextResponse.json({
           success: true,
           hasChanges: true,
-          diff: `+ ${xmlContent.split('\n').map(line => `+${line}`).join('\n')}`,
-          currentContent: '',
+          diff: `+ ${xmlContent
+            .split("\n")
+            .map((line) => `+${line}`)
+            .join("\n")}`,
+          currentContent: "",
           newContent: xmlContent,
           fileName: xmlFileName,
-          isNewFile: true
-        })
+          isNewFile: true,
+        });
       }
-      throw error
+      logException(error, {
+        route: "/api/nrt-ruleset/diff",
+        method: "POST",
+        phase: "getContent",
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Could not load diff. Please try again later.",
+        },
+        { status: 500 },
+      );
     }
 
-  } catch (error) {
-    return NextResponse.json({
-      success: false,
-      message: 'Error getting diff: ' + (error as Error).message
-    }, { status: 500 })
-  }
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Unexpected response from repository.",
+      },
+      { status: 500 },
+    );
+  });
 }
 
-function generateXMLFromExcel(release: string, environment: string, storyNumber?: string): string {
-  const timestamp = new Date().toISOString()
-  
+function generateXMLFromExcel(
+  release: string,
+  environment: string,
+  storyNumber?: string,
+): string {
+  const timestamp = new Date().toISOString();
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <nrt-ruleset>
   <metadata>
     <release>${release}</release>
     <environment>${environment}</environment>
-    <story-number>${storyNumber || 'N/A'}</story-number>
+    <story-number>${storyNumber || "N/A"}</story-number>
     <generated-at>${timestamp}</generated-at>
   </metadata>
   <rules>
@@ -103,27 +155,27 @@ function generateXMLFromExcel(release: string, environment: string, storyNumber?
       <active>true</active>
     </rule>
   </rules>
-</nrt-ruleset>`
+</nrt-ruleset>`;
 }
 
 function generateDiff(oldContent: string, newContent: string): string {
-  const oldLines = oldContent.split('\n')
-  const newLines = newContent.split('\n')
-  
-  let diff = ''
-  const maxLines = Math.max(oldLines.length, newLines.length)
-  
+  const oldLines = oldContent.split("\n");
+  const newLines = newContent.split("\n");
+
+  let diff = "";
+  const maxLines = Math.max(oldLines.length, newLines.length);
+
   for (let i = 0; i < maxLines; i++) {
-    const oldLine = oldLines[i] || ''
-    const newLine = newLines[i] || ''
-    
+    const oldLine = oldLines[i] || "";
+    const newLine = newLines[i] || "";
+
     if (oldLine === newLine) {
-      diff += `  ${oldLine}\n`
+      diff += `  ${oldLine}\n`;
     } else {
-      if (oldLine) diff += `- ${oldLine}\n`
-      if (newLine) diff += `+ ${newLine}\n`
+      if (oldLine) diff += `- ${oldLine}\n`;
+      if (newLine) diff += `+ ${newLine}\n`;
     }
   }
-  
-  return diff
+
+  return diff;
 }

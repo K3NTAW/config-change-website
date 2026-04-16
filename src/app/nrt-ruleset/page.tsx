@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Upload, FileText, CheckCircle, AlertCircle, ArrowRight, GitBranch } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -15,6 +16,7 @@ export default function NRTRulesetPage() {
   const [release, setRelease] = useState('')
   const [environment, setEnvironment] = useState('')
   const [storyNumber, setStoryNumber] = useState('')
+  const [changeComment, setChangeComment] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [showDiff, setShowDiff] = useState(false)
   const [diffData, setDiffData] = useState<{
@@ -103,6 +105,9 @@ export default function NRTRulesetPage() {
       formData.append('environment', environment)
       formData.append('storyNumber', storyNumber)
       formData.append('acknowledge', 'true')
+      if (changeComment.trim()) {
+        formData.append('comment', changeComment.trim())
+      }
 
       const response = await fetch('/api/nrt-ruleset/process', {
         method: 'POST',
@@ -288,6 +293,18 @@ export default function NRTRulesetPage() {
                           <pre>{diffData.diff}</pre>
                         </div>
 
+                        <div className="space-y-2">
+                          <Label htmlFor="changeComment">Kommentar zum Push (optional, Audit-Log)</Label>
+                          <Textarea
+                            id="changeComment"
+                            value={changeComment}
+                            onChange={(e) => setChangeComment(e.target.value)}
+                            placeholder="Kurz beschreiben, was sich an der Regel geändert hat…"
+                            className="min-h-[88px] border-slate-200 bg-white"
+                            rows={3}
+                          />
+                        </div>
+
                         <div className="flex justify-center gap-4">
                           <Button
                             onClick={handlePush}
@@ -376,6 +393,7 @@ export default function NRTRulesetPage() {
                   setRelease('')
                   setEnvironment('')
                   setStoryNumber('')
+                  setChangeComment('')
                   setResult(null)
                   setShowDiff(false)
                   setDiffData(null)

@@ -33,7 +33,10 @@ export async function requestPasswordReset(usernameOrEmail: string): Promise<voi
   });
 
   if (!user || !user.email || !user.isActive) {
-    logWarn({ action: "PASSWORD_RESET_REQUEST_NO_USER", usernameOrEmail: value });
+    logWarn({
+      action: "PASSWORD_RESET_REQUEST_NO_USER",
+      identifierLen: value.length,
+    });
     return;
   }
 

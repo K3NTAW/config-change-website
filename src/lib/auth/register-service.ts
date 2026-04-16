@@ -4,20 +4,11 @@ import { prisma } from "@/lib/db/prisma";
 import { registerRequestSchema } from "@/lib/validation/register";
 import { logWarn } from "@/lib/logger";
 import { writeAudit } from "@/lib/audit/audit-service";
+import { RegistrationError } from "@/lib/auth/registration-error";
 
 const BCRYPT_ROUNDS = 12;
 
-export class RegistrationError extends Error {
-  constructor(
-    public readonly code: "VALIDATION" | "CONFLICT" | "INTERNAL",
-    public readonly httpStatus: number,
-    message: string,
-    public readonly fields?: Record<string, string>,
-  ) {
-    super(message);
-    this.name = "RegistrationError";
-  }
-}
+export { RegistrationError };
 
 export async function createRegistrationRequest(raw: unknown) {
   const parsed = registerRequestSchema.safeParse(raw);

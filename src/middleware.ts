@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySessionToken } from "@/lib/auth/jwt";
 import { SESSION_COOKIE_NAME } from "@/constants";
+import { clearSessionCookieOptions } from "@/lib/auth/session-cookie";
 import { isAdminPageRoute, ROLES } from "@/lib/auth/rbac";
 
 const PUBLIC_PATHS = [
@@ -43,7 +44,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   } catch {
     const res = NextResponse.redirect(new URL("/login", req.url));
-    res.cookies.set(SESSION_COOKIE_NAME, "", { maxAge: 0, path: "/" });
+    res.cookies.set(SESSION_COOKIE_NAME, "", clearSessionCookieOptions());
     return res;
   }
 }

@@ -19,6 +19,11 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # prisma.ts throws if DATABASE_URL is unset at import; jwt.ts requires JWT_SECRET (min. 16 chars).
+    # Unit tests mock DB calls — no PostgreSQL service needed unless you run DB integration tests.
+    env:
+      DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
+      JWT_SECRET: ci-jwt-secret-not-for-production-use
     steps:
       - name: Checkout
         uses: actions/checkout@v4
